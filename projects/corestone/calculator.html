@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Расчёт стоимости дома — Corestone</title>
+<meta name="description" content="Онлайн-калькулятор стоимости строительства дома под ключ. Получите индивидуальный расчёт за 5 минут.">
+<link rel="icon" href="assets/logo.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="calculator">
+
+<main>
+  <div class="page-hero">
+    <div class="container">
+      <div class="crumbs"><a href="index.html">Главная</a><span>/</span><span>Стоимость</span></div>
+      <h1>Расчёт стоимости вашего дома</h1>
+      <p>Выберите параметры — цена обновится сразу. Для точной сметы оставьте заявку</p>
+    </div>
+  </div>
+
+  <section style="padding-top:40px">
+    <div class="container">
+      <div class="calc-wrap reveal">
+        <div class="calc">
+          <h3>Быстрая оценка</h3>
+          <p>Выберите параметры — цена обновится сразу</p>
+          <div class="group">
+            <div class="field-label">Площадь дома <output id="areaOut">150 м²</output></div>
+            <input type="range" id="area" min="60" max="400" step="5" value="150" aria-label="Площадь дома">
+          </div>
+          <div class="group">
+            <div class="field-label">Этажность</div>
+            <div class="seg" data-name="floors">
+              <button class="active" data-v="1">1 этаж</button>
+              <button data-v="1.05">2 этажа</button>
+              <button data-v="1.1">С мансардой</button>
+            </div>
+          </div>
+          <div class="group">
+            <div class="field-label">Материал стен</div>
+            <div class="seg" data-name="material">
+              <button class="active" data-v="38000">Газобетон</button>
+              <button data-v="46000">Кирпич</button>
+              <button data-v="33000">Брус</button>
+              <button data-v="29000">Каркас</button>
+            </div>
+          </div>
+          <div class="group">
+            <div class="field-label">Комплектация</div>
+            <div class="seg" data-name="pack">
+              <button data-v="0.55">Коробка</button>
+              <button data-v="0.75">Тёплый контур</button>
+              <button class="active" data-v="1">Под ключ</button>
+            </div>
+          </div>
+          <div class="result">
+            <div><small>Примерная стоимость</small><b id="total">5 700 000 ₽</b></div>
+            <div class="per" id="perM">≈ 38 000 ₽ / м²</div>
+          </div>
+        </div>
+
+        <form class="lead" data-lead novalidate>
+          <h3>Точный расчёт</h3>
+          <p>Заполните поля ниже — инженер подготовит индивидуальную смету</p>
+          <label class="input">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <input name="name" placeholder="Введите ваше имя" required>
+          </label>
+          <label class="input">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2z"/></svg>
+            <input name="phone" type="tel" placeholder="Введите ваш номер телефона" required>
+          </label>
+          <label class="input">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            <input name="email" type="email" placeholder="Введите ваш e-mail">
+          </label>
+          <button class="btn btn-primary" type="submit">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zM7 7h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2z"/></svg>
+            Получить расчёт
+          </button>
+          <p class="consent">Нажимая кнопку, вы соглашаетесь с политикой обработки персональных данных</p>
+          <div class="lead-perks">
+            <div><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Ответим в течение 15 минут</div>
+            <div><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Фиксированная цена в договоре</div>
+            <div><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Без спама и навязчивых звонков</div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

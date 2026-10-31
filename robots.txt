@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://webdistrict-alt.github.io/webvion/sitemap.xml

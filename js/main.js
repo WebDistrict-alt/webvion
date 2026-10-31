@@ -3,7 +3,7 @@
    ========================================================================== */
 
 const CONFIG = {
-  email: "hello@webvion.studio",
+  email: "timofejtitov484@gmail.com",
   // Paste a Formspree / Getform endpoint here to receive messages directly,
   // e.g. "https://formspree.io/f/xxxxxxx". Empty = opens the visitor's mail app.
   formEndpoint: "",

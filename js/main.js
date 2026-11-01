@@ -4,9 +4,9 @@
 
 const CONFIG = {
   email: "timofejtitov484@gmail.com",
-  // Paste a Formspree / Getform endpoint here to receive messages directly,
-  // e.g. "https://formspree.io/f/xxxxxxx". Empty = opens the visitor's mail app.
-  formEndpoint: "",
+  // FormSubmit delivers form messages straight to the email above (no account needed).
+  // Empty = falls back to opening the visitor's mail app.
+  formEndpoint: "https://formsubmit.co/ajax/timofejtitov484@gmail.com",
 };
 
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -230,7 +230,7 @@ function validateField(input) {
   return !message;
 }
 
-$$("input, textarea", form).forEach((input) => {
+$$("[required]", form).forEach((input) => {
   input.addEventListener("blur", () => input.value && validateField(input));
   input.addEventListener("input", () => input.closest(".field").classList.contains("is-invalid") && validateField(input));
 });
@@ -242,7 +242,7 @@ function setStatus(text, type = "") {
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const inputs = $$("input, textarea", form);
+  const inputs = $$("[required]", form);
   const valid = inputs.map(validateField).every(Boolean);
   if (!valid) {
     inputs.find((i) => i.getAttribute("aria-invalid") === "true")?.focus();
@@ -256,12 +256,25 @@ form.addEventListener("submit", async (e) => {
 
   try {
     if (CONFIG.formEndpoint) {
+      // Honeypot filled in → a bot; pretend success and drop it.
+      if (data._honey) {
+        form.reset();
+        return setStatus("Thank you! Your message is on its way — I'll reply within 24 hours.", "success");
+      }
       const res = await fetch(CONFIG.formEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          message: data.details,
+          _subject: `WEBVION — new project inquiry from ${data.name}`,
+          _replyto: data.email,
+          _template: "table",
+        }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || String(json.success) !== "true") throw new Error(json.message || `HTTP ${res.status}`);
       setStatus("Thank you! Your message is on its way — I'll reply within 24 hours.", "success");
     } else {
       const subject = encodeURIComponent(`New project inquiry from ${data.name}`);

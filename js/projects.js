@@ -19,6 +19,17 @@
 
 window.PROJECTS = [
   {
+    title: "AutoLux",
+    category: "Business",
+    year: "2026",
+    description:
+      "Premium car dealership in Moscow. Cinematic hero, car catalogue with detailed model pages, company story and contacts — in Russian and English.",
+    image: "assets/projects/autolux.jpg",
+    url: "projects/autolux/index.html",
+    domain: "autolux.cars",
+    tags: ["Car catalogue", "RU / EN", "Multi-page"],
+  },
+  {
     title: "Camelott",
     category: "Restaurant",
     year: "2026",

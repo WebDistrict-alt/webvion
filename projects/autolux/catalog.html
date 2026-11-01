@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>try{var q=new URLSearchParams(location.search).get('lang'),s=localStorage.getItem('autolux-lang');document.documentElement.lang=q||s||((navigator.language||'ru').slice(0,2)==='ru'?'ru':'en');if(q)localStorage.setItem('autolux-lang',q)}catch(e){}</script>
+  <title>Каталог — AutoLux</title>
+  <meta name="description" content="Каталог автомобилей премиум-класса AutoLux. AutoLux premium car inventory.">
+  <meta name="theme-color" content="#080808">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23080808'/%3E%3Cpath d='M12.5 29L20 11l7.5 18M15.3 23h9.4' stroke='%23c6a15b' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="catalog" data-title-ru="Каталог — AutoLux" data-title-en="Inventory — AutoLux">
+<main>
+  <section class="page-hero page-hero--img">
+    <div class="page-hero__bg"><img src="https://images.unsplash.com/photo-1621135802920-133df287f89c?auto=format&fit=crop&w=2200&q=80" alt=""></div>
+    <div class="container">
+      <nav class="breadcrumbs fade-up" style="--d:.6s" aria-label="Breadcrumbs"><a href="index.html"><span class="ru">Главная</span><span class="en">Home</span></a><span aria-hidden="true">/</span><span><span class="ru">Каталог</span><span class="en">Inventory</span></span></nav>
+      <span class="eyebrow fade-up" style="--d:.7s"><span class="ru">Шоурум AutoLux</span><span class="en">AutoLux showroom</span></span>
+      <h1 class="h1"><span class="split-line"><span style="--d:.8s"><span class="ru">Каталог</span><span class="en">The</span></span></span><span class="split-line"><span class="accent" style="--d:.9s"><span class="ru">автомобилей</span><span class="en">inventory</span></span></span></h1>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="container catalog">
+      <div class="filters-scrim" data-filters-close></div>
+      <aside class="filters" id="filters" aria-label="Filters">
+        <div class="filters__head">
+          <h2><span class="ru">Фильтры</span><span class="en">Filters</span></h2>
+          <button class="link-arrow" type="button" data-reset><span><span class="ru">Сбросить</span><span class="en">Reset</span></span></button>
+          <button class="filters__close" type="button" data-filters-close aria-label="Close" data-aria-label-ru="Закрыть фильтры" data-aria-label-en="Close filters"><span data-icon="close" style="width:20px;height:20px"></span></button>
+        </div>
+        <div class="filter-group">
+          <span class="lbl" id="lbl-brand"><span class="ru">Марка</span><span class="en">Make</span></span>
+          <div class="chips" id="f-brand" role="group" aria-labelledby="lbl-brand"></div>
+        </div>
+        <div class="filter-group">
+          <span class="lbl"><span class="ru">Цена, млн ₽</span><span class="en">Price, ₽ million</span></span>
+          <div class="range" id="f-price">
+            <div class="range__track"></div><div class="range__fill"></div>
+            <input type="range" aria-label="Min price" data-aria-label-ru="Минимальная цена" data-aria-label-en="Minimum price" data-min>
+            <input type="range" aria-label="Max price" data-aria-label-ru="Максимальная цена" data-aria-label-en="Maximum price" data-max>
+          </div>
+          <div class="range-values"><span id="price-min"></span><span id="price-max"></span></div>
+        </div>
+        <div class="filter-group">
+          <span class="lbl"><span class="ru">Год выпуска</span><span class="en">Year</span></span>
+          <div class="select-row">
+            <div class="field"><label for="f-year-from" class="sr-only">From</label><select id="f-year-from"></select></div>
+            <div class="field"><label for="f-year-to" class="sr-only">To</label><select id="f-year-to"></select></div>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="lbl" id="lbl-body"><span class="ru">Тип кузова</span><span class="en">Body style</span></span>
+          <div class="chips" id="f-body" role="group" aria-labelledby="lbl-body"></div>
+        </div>
+        <button class="btn btn--gold btn--block filters-toggle" type="button" data-filters-close><span class="ru">Показать</span><span class="en">Show</span> <span data-count-btn></span></button>
+      </aside>
+
+      <div>
+        <div class="toolbar">
+          <div class="toolbar__count" aria-live="polite"><span class="ru">Найдено:</span><span class="en">Results:</span> <b id="count">0</b></div>
+          <div class="toolbar__right">
+            <button class="btn btn--sm filters-toggle" type="button" data-filters-open aria-controls="filters"><span data-icon="filter" style="width:16px;height:16px"></span> <span class="ru">Фильтры</span><span class="en">Filters</span></button>
+            <div class="field">
+              <label for="f-sort"><span class="ru">Сортировка</span><span class="en">Sort</span></label>
+              <select id="f-sort">
+                <option value="popular" data-text-ru="По популярности" data-text-en="Featured">По популярности</option>
+                <option value="price-asc" data-text-ru="Сначала дешевле" data-text-en="Price: low to high">Сначала дешевле</option>
+                <option value="price-desc" data-text-ru="Сначала дороже" data-text-en="Price: high to low">Сначала дороже</option>
+                <option value="new" data-text-ru="Сначала новее" data-text-en="Newest first">Сначала новее</option>
+                <option value="power" data-text-ru="По мощности" data-text-en="Most powerful">По мощности</option>
+                <option value="mileage" data-text-ru="По пробегу" data-text-en="Lowest mileage">По пробегу</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="active-filters" id="active"></div>
+        <div class="cars-grid" id="grid"></div>
+        <div class="empty" id="empty" hidden>
+          <h3 class="h3"><span class="ru">Ничего не найдено</span><span class="en">No matches</span></h3>
+          <p class="muted"><span class="ru">Измените параметры или доверьте поиск менеджеру — привезём автомобиль под заказ.</span><span class="en">Adjust the filters, or let our manager source the car for you.</span></p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px">
+            <button class="btn btn--sm" data-reset><span class="ru">Сбросить фильтры</span><span class="en">Reset filters</span></button>
+            <button class="btn btn--sm btn--gold" data-open-lead><span class="ru">Подбор под заказ</span><span class="en">Source to order</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/catalog.js"></script>
+</body>
+</html>

@@ -19,6 +19,17 @@
 
 window.PROJECTS = [
   {
+    title: "TechZone",
+    category: "E-commerce",
+    year: "2026",
+    description:
+      "Premium electronics store — product catalogue with filters, product pages, favourites, cart and checkout, all in a fast single-page experience.",
+    image: "assets/projects/techzone.jpg",
+    url: "projects/techzone/index.html",
+    domain: "techzone.store",
+    tags: ["Online store", "Cart & checkout", "Filters"],
+  },
+  {
     title: "AutoLux",
     category: "Business",
     year: "2026",

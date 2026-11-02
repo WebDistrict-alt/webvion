@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TECHZONE — магазин электроники и техники</title>
+  <meta name="description" content="TECHZONE — премиальный магазин электроники: смартфоны, ноутбуки, планшеты, наушники, смарт-часы, консоли и аксессуары с официальной гарантией.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0b'/%3E%3Cpath d='M9 10h14v3h-5.5v11h-3V13H9z' fill='%23fff'/%3E%3Ccircle cx='24' cy='23' r='2.5' fill='%230a66ff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=6">
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к содержимому</a>
+
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <button class="icon-btn burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="drawer">
+        <span></span><span></span><span></span>
+      </button>
+
+      <a href="#/" class="logo" aria-label="TECHZONE — на главную">
+        <span class="logo__mark" aria-hidden="true">T</span>
+        <span class="logo__text">TECH<b>ZONE</b></span>
+      </a>
+
+      <nav class="nav" aria-label="Основная навигация">
+        <a href="#/" data-nav="home">Главная</a>
+        <div class="nav__item nav__item--mega">
+          <a href="#/catalog" data-nav="catalog">Каталог
+            <svg class="i i-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </a>
+          <div class="mega" id="mega"></div>
+        </div>
+        <a href="#/new" data-nav="new">Новинки</a>
+        <a href="#/sale" data-nav="sale">Акции</a>
+        <a href="#/about" data-nav="about">О магазине</a>
+      </nav>
+
+      <div class="header__actions">
+        <button class="icon-btn" id="searchOpen" aria-label="Поиск">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </button>
+        <a class="icon-btn" href="#/favorites" aria-label="Избранное" id="favLink">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6a5 5 0 1 1 7.5 6.6Z"/></svg>
+          <span class="count" data-count="fav" hidden>0</span>
+        </a>
+        <a class="icon-btn icon-btn--hide-sm" href="#/account" aria-label="Личный кабинет">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        </a>
+        <a class="icon-btn" href="#/cart" aria-label="Корзина" id="cartLink">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h15l-1.6 8.1a2 2 0 0 1-2 1.6H9.3a2 2 0 0 1-2-1.6L5 3H2"/><circle cx="9.5" cy="20.5" r="1.2"/><circle cx="17.5" cy="20.5" r="1.2"/></svg>
+          <span class="count" data-count="cart" hidden>0</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile drawer -->
+  <div class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer__backdrop" data-close-drawer></div>
+    <aside class="drawer__panel" aria-label="Мобильное меню">
+      <div class="drawer__head">
+        <a href="#/" class="logo"><span class="logo__mark" aria-hidden="true">T</span><span class="logo__text">TECH<b>ZONE</b></span></a>
+        <button class="icon-btn" data-close-drawer aria-label="Закрыть меню">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <nav class="drawer__nav" id="drawerNav"></nav>
+    </aside>
+  </div>
+
+  <!-- Search overlay -->
+  <div class="search" id="search" aria-hidden="true" role="dialog" aria-label="Поиск товаров">
+    <div class="search__backdrop" data-close-search></div>
+    <div class="search__panel">
+      <div class="container">
+        <form class="search__form" id="searchForm" role="search">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <label for="searchInput" class="sr-only">Поиск по названию</label>
+          <input id="searchInput" type="search" placeholder="Поиск: iPhone, MacBook, наушники…" autocomplete="off">
+          <button type="button" class="icon-btn" data-close-search aria-label="Закрыть поиск">
+            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </form>
+        <div class="search__results" id="searchResults"></div>
+      </div>
+    </div>
+  </div>
+
+  <main id="main" class="view" tabindex="-1"></main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__top">
+        <div class="footer__brand">
+          <a href="#/" class="logo logo--light"><span class="logo__mark" aria-hidden="true">T</span><span class="logo__text">TECH<b>ZONE</b></span></a>
+          <p>Премиальная электроника с официальной гарантией. Доставка по всей России от 1 дня.</p>
+          <form class="subscribe" id="subscribeForm" novalidate>
+            <label for="subEmail" class="sr-only">Email для рассылки</label>
+            <input id="subEmail" type="email" placeholder="Ваш email" required>
+            <button class="btn btn--primary btn--sm" type="submit">Подписаться</button>
+          </form>
+          <p class="subscribe__hint" id="subHint">Новинки и закрытые акции — раз в неделю.</p>
+        </div>
+        <div class="footer__col">
+          <h3>Каталог</h3>
+          <ul id="footerCats"></ul>
+        </div>
+        <div class="footer__col">
+          <h3>Покупателям</h3>
+          <ul>
+            <li><a href="#/delivery">Доставка и оплата</a></li>
+            <li><a href="#/warranty">Гарантия</a></li>
+            <li><a href="#/faq">Вопросы и ответы</a></li>
+            <li><a href="#/reviews">Отзывы</a></li>
+            <li><a href="#/account">Личный кабинет</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3>Компания</h3>
+          <ul>
+            <li><a href="#/about">О магазине</a></li>
+            <li><a href="#/contacts">Контакты</a></li>
+            <li><a href="#/sale">Акции</a></li>
+            <li><a href="#/new">Новинки</a></li>
+          </ul>
+          <p class="footer__phone"><a href="tel:+78005553535">8 800 555-35-35</a><span>Ежедневно 9:00–22:00</span></p>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>© 2026 TECHZONE. Демонстрационный магазин.</span>
+        <span>Цены указаны в рублях с учётом НДС.</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <script src="js/data.js?v=5"></script>
+  <script src="js/store.js?v=5"></script>
+  <script src="js/ui.js?v=5"></script>
+  <script src="js/pages.js?v=5"></script>
+  <script src="js/app.js?v=5"></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experience — TravelGo</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="experience">
+<main class="wrap" id="root"></main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const e = byId(EXPERIENCES, qs('id')) || EXPERIENCES[0];
+  const d = byId(DESTINATIONS, e.dest);
+  const cat = EXP_CATS.find((c) => c.id === e.cat);
+  document.title = `${e.title} — TravelGo`;
+  const PLAN = [
+    ['Meet your guide', `Meeting point in central ${e.city}, 15 minutes before start.`],
+    ['Safety and intro', 'A short briefing, gear check and a quick round of introductions.'],
+    ['The main event', e.desc],
+    ['Wrap-up', 'Photos from the guide are shared with you the same evening.'],
+  ];
+  const related = EXPERIENCES.filter((x) => x.id !== e.id && (x.cat === e.cat || x.dest === e.dest)).slice(0, 3);
+  let people = 2;
+
+  $('#root').innerHTML = `
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="experiences.html">Experiences</a>${icon('right', 'icon-sm')}<a href="experiences.html?cat=${cat.id}">${cat.label}</a>${icon('right', 'icon-sm')}<span>${e.title}</span></nav>
+    <div class="exp-hero">${media(e.img, e.title, 1600, '', true)}
+      <div class="txt"><span class="badge badge-glass" style="position:static">${icon(cat.icon, 'icon-sm')}${cat.label}</span>
+        <h1>${e.title}</h1><p>${e.city}, ${d.country}</p></div></div>
+
+    <div class="detail">
+      <div class="detail-main">
+        <div class="facts">
+          <div class="fact">${icon('clock')}<span>Duration</span><b>${e.hours} hours</b></div>
+          <div class="fact">${icon('users')}<span>Group size</span><b>Up to ${e.group}</b></div>
+          <div class="fact">${icon('star')}<span>Rating</span><b>${e.rating.toFixed(1)} (${e.reviews.toLocaleString('en-US')})</b></div>
+          <div class="fact">${icon('globe')}<span>Language</span><b>English</b></div>
+        </div>
+        <section class="block"><h2>What you’ll do</h2><p>${e.desc} Suitable for most fitness levels. Your guide adapts the pace to the group.</p></section>
+        <section class="block"><h2>How it goes</h2><ol class="steps-list">${PLAN.map(([t, x]) => `<li><div><b>${t}</b><span>${x}</span></div></li>`).join('')}</ol></section>
+        <section class="block"><h2>Included</h2><ul class="amen"><li>${icon('check')}Licensed local guide</li><li>${icon('check')}All entry fees</li><li>${icon('check')}Photos of your group</li><li>${icon('check')}Water and snacks</li><li>${icon('shield')}Insurance</li><li>${icon('calendar')}Free cancellation 24 h</li></ul></section>
+        ${related.length ? `<section class="block"><h2>You might also like</h2><div class="grid grid-3">${related.map(expCard).join('')}</div></section>` : ''}
+      </div>
+      <aside class="book-card">
+        <div class="top"><span><b>${money(e.price)}</b> <span class="muted">/ person</span></span><span class="rating">${icon('star')}${e.rating.toFixed(1)}</span></div>
+        <label class="field"><span>Date</span><input class="input" type="date" id="date"></label>
+        <div class="field"><span>People</span><div class="stepper"><button type="button" data-p="-1" aria-label="Fewer people">${icon('minus')}</button><output id="ppl"></output><button type="button" data-p="1" aria-label="More people">${icon('plus')}</button></div></div>
+        <div class="book-rows"><div class="total"><span>Total</span><span id="tot"></span></div></div>
+        <button class="btn btn-primary btn-block" id="book">Book experience</button>
+        <button class="btn btn-ghost btn-block ${isFav('exp', e.id) ? 'is-on' : ''}" data-fav="exp:${e.id}" aria-pressed="${isFav('exp', e.id)}">${icon('heart')}Save for later</button>
+      </aside>
+    </div>`;
+
+  const dt = $('#date');
+  const tmr = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+  dt.min = tmr; dt.value = tmr;
+  const upd = () => { $('#ppl').textContent = `${people} ${people > 1 ? 'people' : 'person'}`; $('#tot').textContent = money(e.price * people); };
+  $$('[data-p]').forEach((b) => b.onclick = () => { people = Math.min(e.group, Math.max(1, people + +b.dataset.p)); upd(); });
+  $('#book').onclick = () => {
+    if (!dt.value) { toast('Pick a date first', 'x'); dt.focus(); return; }
+    const code = 'TG-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+    const list = store.get('bookings', []);
+    list.unshift({ code, exp: e.id, start: new Date(dt.value).toISOString(), guests: people, total: e.price * people });
+    store.set('bookings', list);
+    openModal(`<div style="text-align:center;padding:10px 0">
+      <div style="width:64px;height:64px;border-radius:50%;background:var(--teal-soft);color:var(--teal);display:grid;place-items:center;margin:0 auto 16px">${icon('check')}</div>
+      <h2>Experience booked</h2><p class="coord" style="font-size:22px;margin:10px 0">${code}</p>
+      <p class="muted" style="margin-bottom:22px">${e.title}, ${new Date(dt.value).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}, ${people} ${people > 1 ? 'people' : 'person'}.</p>
+      <a class="btn btn-primary" href="account.html#bookings">View my bookings</a></div>`);
+  };
+  upd();
+</script>
+</body>
+</html>

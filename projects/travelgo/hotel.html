@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hotel — TravelGo</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="hotel">
+<main class="wrap" id="root"></main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const h = byId(HOTELS, qs('id')) || HOTELS[0];
+  const d = byId(DESTINATIONS, h.dest);
+  document.title = `${h.name} — TravelGo`;
+  const photos = [h.img, ROOMS[1].img, d.gallery[0], ROOMS[2].img, d.gallery[1]];
+  const rooms = ROOMS.map((r) => ({ ...r, price: Math.round(h.price * r.k / 5) * 5 }));
+  const REVIEWS = [
+    { n: 'Mira K.', from: 'Berlin', s: 9.6, when: 'October 2026', t: 'Spotless room and the staff remembered our names from day one. The location made every morning easy.' },
+    { n: 'Daniel R.', from: 'Toronto', s: 9.0, when: 'September 2026', t: 'Great breakfast and a really comfortable bed. Ask for a higher floor if you want the view.' },
+    { n: 'Aiko T.', from: 'Osaka', s: 8.8, when: 'August 2026', t: 'Quiet even on a busy weekend. Wi-Fi was fast enough for video calls.' },
+    { n: 'Lucas M.', from: 'Lisbon', s: 9.4, when: 'July 2026', t: 'We booked the suite for an anniversary and they left a handwritten card. Small touch, big difference.' },
+  ];
+  const sel = { room: 'dlx', start: null, end: null, guests: 2 };
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let calMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  // demo: some nights are sold out
+  const soldOut = new Set([3, 4, 11, 18, 19, 26].map((n) => { const x = new Date(today); x.setDate(x.getDate() + n); return x.toDateString(); }));
+
+  $('#root').innerHTML = `
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="hotels.html">Hotels</a>${icon('right', 'icon-sm')}<a href="destination.html?id=${d.id}">${d.name}</a>${icon('right', 'icon-sm')}<span>${h.name}</span></nav>
+    <div class="gallery">${photos.map((p, i) => `<button class="media" data-photo="${i}" aria-label="Open photo ${i + 1}"><img src="${U(p, i ? 600 : 1200)}" alt="${h.name} photo ${i + 1}" ${i ? 'loading="lazy"' : ''} onerror="this.parentNode.classList.add('is-broken')"></button>`).join('')}</div>
+
+    <div class="detail">
+      <div class="detail-main">
+        <div class="detail-title">
+          <div><span class="badge">${h.type}</span> ${stars(h.stars)}
+            <h1 style="margin-top:10px">${h.name}</h1>
+            <div class="meta"><span style="display:inline-flex;gap:6px;align-items:center">${icon('pin', 'icon-sm')}${h.city}, ${h.country}</span><span class="rating">${icon('star')}${h.rating.toFixed(1)}</span><span>${h.reviews.toLocaleString('en-US')} reviews</span></div></div>
+          <button class="icon-btn ${isFav('hotel', h.id) ? 'is-on' : ''}" data-fav="hotel:${h.id}" aria-label="Save hotel" aria-pressed="${isFav('hotel', h.id)}">${icon('heart')}</button>
+        </div>
+
+        <section class="block"><h2>About this stay</h2><p>${h.desc} Check-in from 3 pm, check-out until 11 am. Free cancellation up to 48 hours before arrival. ${d.name} highlights like ${d.sights[0].n} and ${d.sights[1].n} are a short ride away.</p></section>
+
+        <section class="block"><h2>Amenities</h2><ul class="amen">${h.amen.map((a) => `<li>${icon(AMENITIES[a].icon)}${AMENITIES[a].label}</li>`).join('')}<li>${icon('shield')}24h reception</li><li>${icon('check')}Free cancellation</li></ul></section>
+
+        <section class="block"><h2>Choose a room</h2>
+          <div class="rooms" role="radiogroup" aria-label="Room type">${rooms.map((r) => `
+            <label class="room ${r.id === sel.room ? 'is-sel' : ''}" data-room="${r.id}">
+              <input type="radio" name="room" value="${r.id}" ${r.id === sel.room ? 'checked' : ''}>
+              ${media(r.img, r.name, 400)}
+              <div><h3>${r.name}</h3><ul><li>${icon('size', 'icon-sm')}${r.size} m²</li><li>${icon('bed', 'icon-sm')}${r.bed}</li><li>${icon('users', 'icon-sm')}Up to ${r.guests}</li></ul></div>
+              <div class="p"><span class="price">${money(r.price)}</span><br><small class="muted">per night</small></div>
+            </label>`).join('')}</div>
+        </section>
+
+        <section class="block"><h2>Availability</h2><div class="cal" id="cal"></div></section>
+
+        <section class="block"><h2>Guest reviews</h2>
+          <div class="score-row"><div><div class="score-big">${h.rating.toFixed(1)}</div><span class="muted">${h.rating >= 9 ? 'Exceptional' : 'Excellent'}</span></div>
+            <div class="score-bars">${[['Cleanliness', .2], ['Location', .1], ['Staff', .3], ['Value', -.4]].map(([l, k]) => { const v = Math.min(10, h.rating + k); return `<div><span>${l}</span><span class="bar"><i style="width:${v * 10}%"></i></span><span>${v.toFixed(1)}</span></div>`; }).join('')}</div></div>
+          <div class="reviews">${REVIEWS.map((r) => `<article class="review"><header><span class="avatar">${r.n[0]}</span><div><b>${r.n}</b><span>${r.from}, ${r.when}</span></div><span class="rating" style="margin-left:auto">${icon('star')}${r.s.toFixed(1)}</span></header><p>${r.t}</p></article>`).join('')}</div>
+        </section>
+      </div>
+
+      <aside class="book-card" aria-label="Booking">
+        <div class="top"><span><b id="bk-night">${money(rooms[1].price)}</b> <span class="muted">/ night</span></span><span class="rating">${icon('star')}${h.rating.toFixed(1)}</span></div>
+        <div class="two">
+          <div class="field"><span>Check-in</span><div class="input" style="display:flex;align-items:center" id="bk-in">Select</div></div>
+          <div class="field"><span>Check-out</span><div class="input" style="display:flex;align-items:center" id="bk-out">Select</div></div>
+        </div>
+        <div class="field"><span>Guests</span><div class="stepper"><button type="button" data-g="-1" aria-label="Fewer guests">${icon('minus')}</button><output id="bk-g">2 guests</output><button type="button" data-g="1" aria-label="More guests">${icon('plus')}</button></div></div>
+        <div class="book-rows" id="bk-rows"></div>
+        <button class="btn btn-primary btn-block" id="bk-btn">Reserve</button>
+        <p class="muted" style="font-size:13px;text-align:center">Demo booking. You won’t be charged.</p>
+      </aside>
+    </div>`;
+
+  const sameDay = (a, b) => a && b && a.toDateString() === b.toDateString();
+  function drawCal() {
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    const first = (new Date(y, m, 1).getDay() + 6) % 7;
+    const days = new Date(y, m + 1, 0).getDate();
+    let cells = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((x) => `<span class="dow">${x}</span>`).join('') + '<span></span>'.repeat(first);
+    for (let i = 1; i <= days; i++) {
+      const dt = new Date(y, m, i);
+      const dis = dt < today || soldOut.has(dt.toDateString());
+      const cls = [sameDay(dt, sel.start) && 'is-start', sameDay(dt, sel.end) && 'is-end', sel.start && sel.end && dt > sel.start && dt < sel.end && 'in-range'].filter(Boolean).join(' ');
+      cells += `<button type="button" class="${cls}" data-day="${dt.toISOString()}" ${dis ? 'disabled aria-label="Sold out"' : ''}>${i}</button>`;
+    }
+    $('#cal').innerHTML = `<div class="cal-head"><button class="icon-btn" data-m="-1" aria-label="Previous month" ${calMonth <= new Date(today.getFullYear(), today.getMonth(), 1) ? 'disabled' : ''}>${icon('left')}</button>
+      <b>${calMonth.toLocaleString('en-US', { month: 'long', year: 'numeric' })}</b>
+      <button class="icon-btn" data-m="1" aria-label="Next month">${icon('right')}</button></div>
+      <div class="cal-grid">${cells}</div>
+      <div class="cal-legend"><span>Pick check-in, then check-out.</span><span style="text-decoration:line-through">12</span><span>Sold out</span></div>`;
+  }
+  $('#cal').addEventListener('click', (e) => {
+    const mBtn = e.target.closest('[data-m]');
+    if (mBtn) { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + +mBtn.dataset.m, 1); drawCal(); return; }
+    const b = e.target.closest('[data-day]'); if (!b) return;
+    const dt = new Date(b.dataset.day);
+    if (!sel.start || sel.end || dt <= sel.start) { sel.start = dt; sel.end = null; }
+    else {
+      // block ranges crossing a sold-out night
+      for (let x = new Date(sel.start); x < dt; x.setDate(x.getDate() + 1)) if (soldOut.has(x.toDateString())) { toast('That range includes a sold-out night', 'x'); return; }
+      sel.end = dt;
+    }
+    drawCal(); summary();
+  });
+
+  const fmtD = (x) => x ? x.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Select';
+  function summary() {
+    const r = rooms.find((x) => x.id === sel.room);
+    const nights = sel.start && sel.end ? Math.round((sel.end - sel.start) / 864e5) : 0;
+    $('#bk-night').textContent = money(r.price);
+    $('#bk-in').textContent = fmtD(sel.start);
+    $('#bk-out').textContent = fmtD(sel.end);
+    $('#bk-g').textContent = `${sel.guests} guest${sel.guests > 1 ? 's' : ''}`;
+    const base = r.price * nights, fee = Math.round(base * .08);
+    $('#bk-rows').innerHTML = nights ? `
+      <div><span>${money(r.price)} × ${nights} night${nights > 1 ? 's' : ''}</span><span>${money(base)}</span></div>
+      <div><span>Taxes and fees</span><span>${money(fee)}</span></div>
+      <div class="total"><span>Total</span><span>${money(base + fee)}</span></div>` : `<div><span>Pick dates in the calendar to see the total.</span></div>`;
+    $('#bk-btn').disabled = !nights;
+    return { r, nights, total: base + fee };
+  }
+
+  $('#root').addEventListener('change', (e) => {
+    if (e.target.name !== 'room') return;
+    sel.room = e.target.value;
+    const r = rooms.find((x) => x.id === sel.room);
+    if (sel.guests > r.guests) sel.guests = r.guests;
+    $$('.room').forEach((el) => el.classList.toggle('is-sel', el.dataset.room === sel.room));
+    summary();
+  });
+  $('#root').addEventListener('click', (e) => {
+    const g = e.target.closest('[data-g]');
+    if (g) { const max = rooms.find((x) => x.id === sel.room).guests; sel.guests = Math.min(max, Math.max(1, sel.guests + +g.dataset.g)); summary(); }
+    const p = e.target.closest('[data-photo]');
+    if (p) openLightbox(photos, +p.dataset.photo, h.name);
+  });
+
+  $('#bk-btn').onclick = () => {
+    const { r, nights, total } = summary();
+    const u = getUser();
+    const m = openModal(`
+      <h2>Confirm your stay</h2>
+      <p>${h.name}, ${r.name}. ${fmtD(sel.start)} to ${fmtD(sel.end)}, ${nights} night${nights > 1 ? 's' : ''}, ${sel.guests} guest${sel.guests > 1 ? 's' : ''}.</p>
+      <form class="modal-form" novalidate>
+        <label class="field"><span>Full name</span><input class="input" name="name" autocomplete="name" value="${u ? esc(u.name) : ''}" required></label>
+        <label class="field"><span>Email for confirmation</span><input class="input" type="email" name="email" autocomplete="email" value="${u ? esc(u.email) : ''}" required></label>
+        <div class="book-rows"><div class="total"><span>Total</span><span>${money(total)}</span></div></div>
+        <p class="form-err" style="color:var(--danger);font-size:14px;min-height:20px" aria-live="polite"></p>
+        <button class="btn btn-primary btn-block" type="submit">Confirm booking</button>
+      </form>`);
+    $('form', m).onsubmit = (ev) => {
+      ev.preventDefault();
+      const f = new FormData(ev.target);
+      if (!String(f.get('name')).trim()) { $('.form-err', m).textContent = 'Enter the guest name.'; return; }
+      if (!/^\S+@\S+\.\S+$/.test(String(f.get('email')))) { $('.form-err', m).textContent = 'Enter a valid email.'; return; }
+      const code = 'TG-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+      const list = store.get('bookings', []);
+      list.unshift({ code, hotel: h.id, room: r.name, start: sel.start.toISOString(), end: sel.end.toISOString(), guests: sel.guests, total });
+      store.set('bookings', list);
+      m.querySelector('.modal-box').innerHTML = `<button class="icon-btn x" data-close aria-label="Close">${icon('x')}</button>
+        <div style="text-align:center;padding:10px 0">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--teal-soft);color:var(--teal);display:grid;place-items:center;margin:0 auto 16px">${icon('check')}</div>
+          <h2>Booking confirmed</h2><p class="muted" style="margin:8px 0 4px">Confirmation code</p>
+          <p class="coord" style="font-size:22px">${code}</p>
+          <p class="muted" style="margin:14px 0 22px">${h.name}, ${fmtD(sel.start)} to ${fmtD(sel.end)}. You’ll find it in your account.</p>
+          <a class="btn btn-primary" href="account.html#bookings">View my bookings</a></div>`;
+    };
+  };
+
+  drawCal(); summary();
+</script>
+</body>
+</html>

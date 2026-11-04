@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Destination — TravelGo</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="destination">
+<main class="wrap" id="root"></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const d = byId(DESTINATIONS, qs('id')) || DESTINATIONS[0];
+  document.title = `${d.name} — TravelGo`;
+  const hotels = HOTELS.filter((h) => h.dest === d.id);
+  const exps = EXPERIENCES.filter((e) => e.dest === d.id);
+  const SEASONS = { spring: 'Mar–May', summer: 'Jun–Aug', autumn: 'Sep–Nov', winter: 'Dec–Feb' };
+
+  $('#root').innerHTML = `
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="destinations.html">Destinations</a>${icon('right', 'icon-sm')}<span>${d.name}</span></nav>
+    <div class="exp-hero">
+      ${media(d.img, `${d.name}, ${d.country}`, 1600, '', true)}
+      <div class="txt">
+        <span class="coord">${fmtCoord(d.lat, d.lng)}</span>
+        <h1>${d.name}</h1>
+        <p>${d.country}, ${d.continent}. ${d.short}</p>
+        <div class="hero-cta" style="margin-top:22px">
+          <a class="btn btn-grad" href="planner.html?dest=${d.id}">${icon('sparkles')}Plan ${d.name} with AI</a>
+          <button class="btn btn-ghost" data-fav="dest:${d.id}" aria-pressed="${isFav('dest', d.id)}">${icon('heart')}<span>${isFav('dest', d.id) ? 'Saved' : 'Save'}</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail">
+      <div class="detail-main">
+        <div class="facts">
+          <div class="fact">${icon('wallet')}<span>7-day budget</span><b>from ${money(d.budget)}</b></div>
+          <div class="fact">${icon('calendar')}<span>Best time</span><b>${d.season.map((s) => SEASONS[s]).join(', ')}</b></div>
+          <div class="fact">${icon('compass')}<span>Good for</span><b style="text-transform:capitalize">${d.types.slice(0, 2).join(', ')}</b></div>
+          <div class="fact">${icon('clock')}<span>Ideal stay</span><b>${d.perDay > 250 ? '6–8' : '5–7'} days</b></div>
+        </div>
+
+        <section class="block"><h2>About ${d.name}</h2><p>${d.about}</p></section>
+
+        <section class="block"><h2>Photos</h2>
+          <div class="thumbs" style="gap:10px">${d.gallery.map((g, i) => `<button class="media" style="aspect-ratio:4/3;border-radius:14px;cursor:zoom-in" data-photo="${i}" aria-label="Open photo ${i + 1}"><img src="${U(g, 700)}" alt="${d.name} photo ${i + 1}" loading="lazy" onerror="this.parentNode.classList.add('is-broken')"></button>`).join('')}</div>
+        </section>
+
+        <section class="block"><h2>Top sights</h2>
+          <div class="sight-list">${d.sights.map((s) => `<div class="sight">${icon('pin')}<div style="flex:1"><b>${s.n}</b><span>${s.d}</span></div><span class="coord">${s.t}</span></div>`).join('')}</div>
+        </section>
+
+        ${hotels.length ? `<section class="block"><h2>Where to stay</h2><div class="grid grid-3">${hotels.map(hotelCard).join('')}</div></section>` : ''}
+        ${exps.length ? `<section class="block"><h2>Things to do</h2><div class="grid grid-3">${exps.map(expCard).join('')}</div></section>` : ''}
+      </div>
+
+      <aside class="book-card">
+        <div class="map-shell" style="border-radius:14px"><div class="map-canvas" id="mini" style="height:200px"></div></div>
+        <div class="top"><span class="muted">Daily spend</span><b>${money(d.perDay)}</b></div>
+        <div class="book-rows">
+          <div><span>Accommodation</span><span>${money(d.costs.stay)}</span></div>
+          <div><span>Food and drinks</span><span>${money(d.costs.food)}</span></div>
+          <div><span>Local transport</span><span>${money(d.costs.transport)}</span></div>
+          <div><span>Activities</span><span>${money(d.perDay - d.costs.stay - d.costs.food - d.costs.transport)}</span></div>
+          <div class="total"><span>7 days, 1 person</span><span>${money(d.perDay * 7)}</span></div>
+        </div>
+        <a class="btn btn-primary btn-block" href="builder.html?add=${d.id}">${icon('route')}Add to Trip Builder</a>
+        <a class="btn btn-ghost btn-block" href="hotels.html?country=${encodeURIComponent(d.country)}">Hotels in ${d.country}</a>
+      </aside>
+    </div>`;
+
+  const m = makeMap('mini', { center: [d.lat, d.lng], zoom: 5 });
+  L.marker([d.lat, d.lng], { icon: pinIcon(true) }).addTo(m);
+
+  document.addEventListener('click', (e) => {
+    const p = e.target.closest('[data-photo]');
+    if (p) openLightbox(d.gallery, +p.dataset.photo, d.name);
+  });
+  document.addEventListener('fav-change', () => {
+    const b = $('.btn[data-fav]');
+    b.querySelector('span').textContent = isFav('dest', d.id) ? 'Saved' : 'Save';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TravelGo — Explore beyond limits</title>
+<meta name="description" content="Discover destinations, compare hotels and plan your trip day by day with TravelGo.">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="index">
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-anim">
+          <span class="coord">Next stop: 5.27° N, 73.00° E</span>
+          <h1 style="margin-top:18px"><span class="ln">Explore</span><span class="ln">beyond</span><span class="ln ln-grad">limits.</span></h1>
+          <p class="hero-lead">Discover new destinations, build your perfect trip and explore the world with smarter travel tools.</p>
+          <div class="hero-cta">
+            <a class="btn btn-grad" href="planner.html"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"/></svg>Plan a trip with AI</a>
+            <a class="btn btn-ghost" href="discover.html">Open the world map</a>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-label="Featured destination: Maldives, Baa Atoll">
+          <div class="hv-photo media"><img src="https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1200&q=75" alt="Turquoise lagoon and overwater villas in the Maldives" onerror="this.parentNode.classList.add('is-broken')"></div>
+          <div class="hv-place"><span class="coord">5.27° N, 73.00° E</span><h3>Baa Atoll</h3><p>Maldives, UNESCO biosphere reserve</p></div>
+
+          <div class="floating fl-weather">
+            <span class="ic" data-ic="sun"></span>
+            <div><b>29°C</b><span>Sunny, sea 28°C</span></div>
+          </div>
+
+          <div class="floating fl-map">
+            <svg viewBox="0 0 220 130" role="img" aria-label="Flight path from Dubai to Malé">
+              <rect width="220" height="130" fill="#0B1020"/>
+              <g stroke="rgba(146,157,181,.14)" stroke-width="1">
+                <path d="M0 26h220M0 52h220M0 78h220M0 104h220M44 0v130M88 0v130M132 0v130M176 0v130"/>
+              </g>
+              <g fill="rgba(146,157,181,.32)">
+                <path d="M20 18c18-8 44-6 58 4s8 22-6 28-30 2-40 12-22 6-24-6 0-30 12-38z"/>
+                <path d="M96 44c10-6 30-4 36 8s-4 30-16 36-24-6-26-20 0-18 6-24z"/>
+                <path d="M150 14c22-6 52 2 60 16s-6 28-26 30-36-6-40-20 0-22 6-26z"/>
+              </g>
+              <path class="route-dash" d="M70 40 Q 120 20 158 92" fill="none" stroke="#27D9C3" stroke-width="2" stroke-dasharray="4 5"/>
+              <circle cx="70" cy="40" r="4" fill="#6C63FF"/><circle cx="70" cy="40" r="9" fill="none" stroke="#6C63FF" stroke-opacity=".4"/>
+              <circle cx="158" cy="92" r="4" fill="#27D9C3"/><circle cx="158" cy="92" r="9" fill="none" stroke="#27D9C3" stroke-opacity=".4"/>
+              <text x="58" y="30" fill="#F5F7FF" font-family="Space Grotesk" font-size="10" font-weight="600">DXB</text>
+              <text x="166" y="96" fill="#F5F7FF" font-family="Space Grotesk" font-size="10" font-weight="600">MLE</text>
+            </svg>
+            <span class="coord">25.25° N → 4.19° N, 3,170 km</span>
+          </div>
+
+          <div class="floating fl-flight">
+            <div class="leg"><b>DXB</b><span>Dubai</span></div>
+            <div class="path" data-ic="plane"></div>
+            <div class="leg"><b>MLE</b><span>Malé</span></div>
+            <div style="padding-left:10px;border-left:1px solid var(--line)"><b style="font:600 15px var(--f-head);display:block">4h 05m</b><span class="muted" style="font-size:12px">Direct</span></div>
+          </div>
+
+          <div class="floating fl-price"><span>7 nights, 2 guests</span><b>from $4,800</b></div>
+        </div>
+      </div>
+
+      <form class="searchbar hero-search" id="search" action="destinations.html" role="search">
+        <div class="sb-field"><span data-ic="pin"></span><label><span>Where to?</span><input name="q" list="dest-list" placeholder="City or country" autocomplete="off"></label></div>
+        <div class="sb-field"><span data-ic="calendar"></span><label><span>Travel dates</span><input name="date" type="date"></label></div>
+        <div class="sb-field"><span data-ic="users"></span><label><span>Travelers</span>
+          <select name="travelers"><option>1 traveler</option><option selected>2 travelers</option><option>3 travelers</option><option>4 travelers</option><option>5+ travelers</option></select></label></div>
+        <div class="sb-field"><span data-ic="wallet"></span><label><span>Budget</span>
+          <select name="budget"><option value="">Any budget</option><option value="2000">Up to $2,000</option><option value="3000">Up to $3,000</option><option value="4000">Up to $4,000</option></select></label></div>
+        <button class="btn btn-primary" type="submit"><span data-ic="search"></span>Explore</button>
+        <datalist id="dest-list"></datalist>
+      </form>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div><h2>Trending destinations</h2><p>Where TravelGo users are booking this month.</p></div>
+        <a class="link-more" href="destinations.html">All destinations <span data-ic="arrow"></span></a>
+      </div>
+      <div class="dest-rail" id="trending"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div><h2>Pick a point on the map</h2><p>Tap a city to see what it costs, what to see and how long to stay.</p></div>
+        <a class="link-more" href="discover.html">Full-screen map <span data-ic="arrow"></span></a>
+      </div>
+      <div class="map-shell map-teaser">
+        <div class="map-canvas" id="home-map" aria-label="Interactive world map with destinations"></div>
+        <aside class="mt-side" id="home-map-side" aria-live="polite"></aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div><h2>Popular hotels</h2><p>Highest-rated stays across our destinations.</p></div>
+        <a class="link-more" href="hotels.html">All hotels <span data-ic="arrow"></span></a>
+      </div>
+      <div class="grid grid-4" id="hotels"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div><h2>Recommended experiences</h2><p>Small-group tours with local guides, rated 4.8 and above.</p></div>
+        <a class="link-more" href="experiences.html">All experiences <span data-ic="arrow"></span></a>
+      </div>
+      <div class="grid grid-4" id="exps"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head"><div><h2>Explore by category</h2></div></div>
+      <div class="cat-grid" id="cats"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="ai-band">
+        <div>
+          <span class="badge badge-teal"><span data-ic="sparkles"></span>AI Planner</span>
+          <h2 style="margin-top:16px">Tell us the vibe. Get a day-by-day plan.</h2>
+          <p>Choose a destination, days, budget and interests. The planner builds a route with timings, costs and local tips that you can edit in Trip Builder.</p>
+          <a class="btn btn-grad" href="planner.html">Generate my trip</a>
+        </div>
+        <div class="ai-preview" aria-hidden="true">
+          <div class="ai-day"><span class="d">DAY 1</span><div><b>Asakusa and Senso-ji</b><span>Temple morning, river cruise to Odaiba</span></div><span class="coord">$65</span></div>
+          <div class="ai-day"><span class="d">DAY 2</span><div><b>Shibuya and Harajuku</b><span>Meiji Shrine, Takeshita St, Shibuya Sky</span></div><span class="coord">$90</span></div>
+          <div class="ai-day"><span class="d">DAY 3</span><div><b>Day trip to Hakone</b><span>Lake Ashi, ropeway, onsen evening</span></div><span class="coord">$140</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head"><div><h2>Travel inspiration</h2><p>Guides and routes from the TravelGo team.</p></div></div>
+      <div class="insp" id="insp"></div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  $('#dest-list').innerHTML = DESTINATIONS.map((d) => `<option value="${d.name}">`).join('');
+
+  const trend = ['tokyo', 'iceland', 'bali', 'maldives', 'barcelona'].map((id) => byId(DESTINATIONS, id));
+  $('#trending').innerHTML = trend.map((d, i) => `
+    <a class="dest-tile" href="destination.html?id=${d.id}">
+      ${media(d.img, `${d.name}, ${d.country}`, i === 0 ? 1100 : 700)}
+      <span class="badge badge-glass rank">#${i + 1} this month</span>
+      <div class="info"><div><span class="coord">${fmtCoord(d.lat, d.lng)}</span><h3>${d.name}</h3><p>${d.country}</p></div>
+      <span class="price">from ${money(d.budget)}</span></div>
+    </a>`).join('');
+
+  $('#hotels').innerHTML = [...HOTELS].sort((a, b) => b.rating - a.rating).slice(0, 4).map(hotelCard).join('');
+  $('#exps').innerHTML = EXPERIENCES.filter((e) => e.rating >= 4.8).slice(0, 4).map(expCard).join('');
+
+  const CATS = [
+    ['Beaches', 'Bali, Maldives, Barcelona', 'waves', 'destinations.html?type=beach'],
+    ['Mountains', 'Swiss Alps, Norway', 'mountain', 'destinations.html?type=adventure'],
+    ['City breaks', 'Tokyo, Seoul, New York', 'building', 'destinations.html?type=city'],
+    ['Food trips', '12 tasting tours', 'utensils', 'experiences.html?cat=food'],
+    ['Wild nature', 'Fjords, glaciers, auroras', 'leaf', 'destinations.html?type=nature'],
+    ['Culture', 'Temples, palaces, festivals', 'ticket', 'experiences.html?cat=culture'],
+  ];
+  $('#cats').innerHTML = CATS.map(([t, s, ic, h]) => `<a class="cat" href="${h}"><span class="ic">${icon(ic)}</span><div><b>${t}</b><span>${s}</span></div></a>`).join('');
+
+  const [main, ...rest] = INSPIRATION;
+  $('#insp').innerHTML = `
+    <a class="insp-main" href="${main.link}">${media(main.img, main.title, 1100)}
+      <div class="txt"><span class="badge badge-teal">${main.tag}</span><h3>${main.title}</h3><p>${main.text}</p></div></a>
+    <div class="insp-list">${rest.map((x) => `
+      <a class="insp-item" href="${x.link}">${media(x.img, x.title, 400)}
+        <div><span class="badge">${x.tag}</span><h4>${x.title}</h4><p>${x.text}</p></div></a>`).join('')}</div>`;
+
+  $('#search').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const p = new URLSearchParams();
+    if (f.get('q')) p.set('q', f.get('q'));
+    if (f.get('budget')) p.set('budget', f.get('budget'));
+    location.href = 'destinations.html' + (p.toString() ? '?' + p : '');
+  });
+
+  // map teaser
+  const side = $('#home-map-side');
+  const hm = makeMap('home-map', { center: [28, 40], zoom: 2 });
+  const markers = {};
+  function showCity(d) {
+    Object.entries(markers).forEach(([id, m]) => m.setIcon(pinIcon(id === d.id)));
+    side.innerHTML = `${media(d.img, d.name, 600)}
+      <div><span class="coord">${fmtCoord(d.lat, d.lng)}</span><h3>${d.name}</h3><p class="muted" style="font-size:14px">${d.country}, ${d.continent}</p></div>
+      <p class="muted" style="font-size:14.5px">${d.short}</p>
+      <div class="cost-grid"><div class="cost"><span>Per day</span><b>${money(d.perDay)}</b></div><div class="cost"><span>Stay</span><b>${money(d.costs.stay)}</b></div><div class="cost"><span>Food</span><b>${money(d.costs.food)}</b></div></div>
+      <a class="btn btn-primary" href="destination.html?id=${d.id}">Explore ${d.name}</a>`;
+  }
+  const hub = [25.25, 55.36];
+  DESTINATIONS.forEach((d) => {
+    L.polyline(arc(hub, [d.lat, d.lng]), { color: '#6C63FF', weight: 1.2, opacity: .45, dashArray: '3 6', interactive: false }).addTo(hm);
+    markers[d.id] = L.marker([d.lat, d.lng], { icon: pinIcon(false), title: d.name, keyboard: true })
+      .addTo(hm).bindTooltip(d.name, { direction: 'top', offset: [0, -10], className: 'pin-label' })
+      .on('click', () => showCity(d));
+  });
+  showCity(byId(DESTINATIONS, 'iceland'));
+</script>
+</body>
+</html>

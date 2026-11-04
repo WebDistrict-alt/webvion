@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experiences — TravelGo</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="experiences">
+<main class="wrap" style="padding-bottom:96px">
+  <header class="page-head">
+    <h1>Experiences</h1>
+    <p>Glacier walks, food tours, manta snorkels and fire dances, led by local guides in small groups.</p>
+  </header>
+
+  <div class="exp-tabs" id="cats" role="group" aria-label="Category"></div>
+  <div class="toolbar">
+    <p class="count" aria-live="polite"><b id="count">0</b> experiences</p>
+    <div class="toolbar-right">
+      <select class="select" id="f-dest" aria-label="Destination" style="min-height:40px;width:auto"><option value="">All destinations</option></select>
+      <select class="select" id="f-price" aria-label="Price" style="min-height:40px;width:auto"><option value="999">Any price</option><option value="50">Under $50</option><option value="100">Under $100</option></select>
+      <select class="select" id="f-dur" aria-label="Duration" style="min-height:40px;width:auto"><option value="">Any length</option><option value="3">Up to 3 h</option><option value="99">Half day or more</option></select>
+    </div>
+  </div>
+  <div class="grid grid-3" id="results"></div>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const s = { cat: qs('cat') || '', dest: '', price: 999, dur: '' };
+  $('#f-dest').innerHTML += DESTINATIONS.filter((d) => EXPERIENCES.some((e) => e.dest === d.id)).map((d) => `<option value="${d.id}">${d.name}</option>`).join('');
+  function render() {
+    $('#cats').innerHTML = [{ id: '', label: 'All', icon: 'compass' }, ...EXP_CATS].map((c) => `<button class="chip" data-cat="${c.id}" aria-pressed="${s.cat === c.id}">${icon(c.icon)}${c.label}</button>`).join('');
+    const list = EXPERIENCES.filter((e) => (!s.cat || e.cat === s.cat) && (!s.dest || e.dest === s.dest) && e.price < s.price &&
+      (!s.dur || (s.dur === '3' ? e.hours <= 3 : e.hours > 3)));
+    $('#count').textContent = list.length;
+    $('#results').innerHTML = list.length ? list.map(expCard).join('') :
+      `<div class="empty" style="grid-column:1/-1"><b>Nothing here yet</b>Try another destination or a higher price.<br><button class="btn btn-ghost btn-sm" data-reset>Show all experiences</button></div>`;
+  }
+  $('#cats').addEventListener('click', (e) => { const c = e.target.closest('[data-cat]'); if (c) { s.cat = c.dataset.cat; render(); } });
+  $('#f-dest').onchange = (e) => { s.dest = e.target.value; render(); };
+  $('#f-price').onchange = (e) => { s.price = +e.target.value; render(); };
+  $('#f-dur').onchange = (e) => { s.dur = e.target.value; render(); };
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-reset]')) { Object.assign(s, { cat: '', dest: '', price: 999, dur: '' }); $('#f-dest').value = ''; $('#f-price').value = 999; $('#f-dur').value = ''; render(); } });
+  render();
+</script>
+</body>
+</html>

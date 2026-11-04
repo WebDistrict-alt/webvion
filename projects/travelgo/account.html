@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My account — TravelGo</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="account">
+<main class="wrap" id="root" style="padding-top:40px"></main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const TABS = [['overview', 'Overview', 'compass'], ['trips', 'My trips', 'route'], ['bookings', 'Bookings', 'ticket'], ['saved', 'Saved', 'heart'], ['settings', 'Settings', 'sliders']];
+  let tab = (location.hash.slice(1) || 'overview');
+  const fmt = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  function guest() {
+    $('#root').innerHTML = `<div class="panel planner-empty" style="margin-bottom:96px">
+      <div><span class="avatar" style="width:64px;height:64px;margin:0 auto 18px;font-size:24px">${icon('user')}</span>
+      <h2>Sign in to see your trips</h2><p>Your saved destinations, bookings and itineraries live here.</p>
+      <div class="hero-cta" style="justify-content:center;margin-top:22px"><button class="btn btn-primary" data-auth="signup">Create an account</button><button class="btn btn-ghost" data-auth="signin">Sign in</button></div></div></div>`;
+  }
+
+  function counts() {
+    const f = favs();
+    return { trips: store.get('trips', []).length, bookings: store.get('bookings', []).length, saved: f.dest.length + f.hotel.length + f.exp.length };
+  }
+
+  function bookingRow(b) {
+    const h = b.hotel && byId(HOTELS, b.hotel), x = b.exp && byId(EXPERIENCES, b.exp);
+    const item = h || x; if (!item) return '';
+    const upcoming = new Date(b.start) > new Date();
+    return `<div class="row-card">${media(item.img, '', 300)}
+      <div><h3>${h ? h.name : x.title}</h3><p>${h ? `${b.room}, ${fmt(b.start)} to ${fmt(b.end)}` : fmt(b.start)}, ${b.guests} guest${b.guests > 1 ? 's' : ''}. Code <span class="coord">${b.code}</span></p></div>
+      <div class="acts"><span class="status ${b.cancelled ? 'past' : upcoming ? 'ok' : 'past'}">${b.cancelled ? 'Cancelled' : upcoming ? 'Confirmed' : 'Completed'}</span><b class="price" style="font-size:16px">${money(b.total)}</b>
+      ${upcoming && !b.cancelled ? `<button class="btn btn-text btn-sm" data-cancel="${b.code}">Cancel</button>` : ''}</div></div>`;
+  }
+
+  function panel() {
+    const u = getUser();
+    const trips = store.get('trips', []);
+    const bookings = store.get('bookings', []);
+    const f = favs();
+    if (tab === 'overview') {
+      const next = bookings.filter((b) => !b.cancelled && new Date(b.start) > new Date()).sort((a, b) => new Date(a.start) - new Date(b.start))[0];
+      const spent = bookings.filter((b) => !b.cancelled).reduce((a, b) => a + b.total, 0);
+      const c = counts();
+      return `<h1 style="font-size:clamp(30px,4vw,40px);margin-bottom:6px">Hi, ${esc(u.name.split(' ')[0])}</h1>
+        <p class="muted" style="margin-bottom:24px">Member since ${fmt(u.since)}.</p>
+        <div class="kpis"><div class="kpi"><span>Saved trips</span><b>${c.trips}</b></div><div class="kpi"><span>Bookings</span><b>${c.bookings}</b></div><div class="kpi"><span>Saved places</span><b>${c.saved}</b></div><div class="kpi"><span>Booked total</span><b>${money(spent)}</b></div></div>
+        <h2 style="font-size:22px;margin-bottom:12px">Next up</h2>
+        ${next ? `<div class="list-rows">${bookingRow(next)}</div>` : `<div class="empty"><b>No upcoming bookings</b>Find a hotel or an experience for your next trip.<br><a class="btn btn-primary btn-sm" href="hotels.html">Browse hotels</a></div>`}
+        <h2 style="font-size:22px;margin:32px 0 12px">Latest trip</h2>
+        ${trips[0] ? `<div class="list-rows">${tripRow(trips[0])}</div>` : `<div class="empty"><b>No trips yet</b>Let the AI Planner draft one in a minute.<br><a class="btn btn-primary btn-sm" href="planner.html">Open AI Planner</a></div>`}`;
+    }
+    if (tab === 'trips') {
+      return `<div class="section-head" style="margin-bottom:20px"><div><h2>My trips</h2></div><a class="btn btn-primary btn-sm" href="builder.html">${icon('plus')}New trip</a></div>
+        ${trips.length ? `<div class="list-rows">${trips.map(tripRow).join('')}</div>` : `<div class="empty"><b>No saved trips</b>Generate one with AI or build it day by day.<br><a class="btn btn-primary btn-sm" href="planner.html">Open AI Planner</a></div>`}`;
+    }
+    if (tab === 'bookings') {
+      return `<div class="section-head" style="margin-bottom:20px"><div><h2>Bookings</h2></div></div>
+        ${bookings.length ? `<div class="list-rows">${bookings.map(bookingRow).join('')}</div>` : `<div class="empty"><b>No bookings yet</b>Reserve a hotel or an experience and it will show up here.<br><a class="btn btn-primary btn-sm" href="hotels.html">Browse hotels</a></div>`}`;
+    }
+    if (tab === 'saved') {
+      const items = [...f.dest.map((id) => byId(DESTINATIONS, id)).filter(Boolean).map(destCard), ...f.hotel.map((id) => byId(HOTELS, id)).filter(Boolean).map(hotelCard), ...f.exp.map((id) => byId(EXPERIENCES, id)).filter(Boolean).map(expCard)];
+      return `<div class="section-head" style="margin-bottom:20px"><div><h2>Saved</h2><p>Tap the heart on any card to save it here.</p></div></div>
+        ${items.length ? `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">${items.join('')}</div>` : `<div class="empty"><b>Nothing saved yet</b>Tap the heart on a destination, hotel or experience.<br><a class="btn btn-primary btn-sm" href="destinations.html">Browse destinations</a></div>`}`;
+    }
+    const prefs = store.get('prefs', { deals: true, tips: true, sms: false });
+    return `<h2 style="font-size:28px;margin-bottom:20px">Settings</h2>
+      <form class="panel" id="profile" style="margin-bottom:20px"><h3 style="font-size:18px;margin-bottom:16px">Profile</h3>
+        <div class="form-grid"><label class="field"><span>Full name</span><input class="input" name="name" value="${esc(u.name)}" autocomplete="name"></label>
+        <label class="field"><span>Email</span><input class="input" type="email" name="email" value="${esc(u.email)}" autocomplete="email"></label>
+        <label class="field"><span>Home airport</span><input class="input" name="airport" value="${esc(u.airport || '')}" placeholder="e.g. LED"></label>
+        <label class="field"><span>Currency</span><select class="select" name="currency">${['USD', 'EUR', 'RUB', 'GBP'].map((c) => `<option ${u.currency === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label></div>
+        <button class="btn btn-primary" style="margin-top:18px">Save changes</button></form>
+      <div class="panel" style="margin-bottom:20px"><h3 style="font-size:18px">Notifications</h3>
+        ${[['deals', 'Price drops', 'When a saved hotel gets cheaper'], ['tips', 'Trip reminders', 'Packing list and check-in reminders before you go'], ['sms', 'Text messages', 'Booking updates by SMS']].map(([k, t, s]) => `
+        <div class="toggle-row"><div><b>${t}</b><span>${s}</span></div><span class="switch"><input type="checkbox" data-pref="${k}" ${prefs[k] ? 'checked' : ''} aria-label="${t}"><i></i></span></div>`).join('')}</div>
+      <button class="btn btn-ghost" id="signout">${icon('logout')}Sign out</button>`;
+  }
+
+  function tripRow(t) {
+    const d = byId(DESTINATIONS, t.dest) || DESTINATIONS[0];
+    const days = t.plan ? t.plan.length : t.days.length;
+    return `<div class="row-card">${media(d.img, '', 300)}
+      <div><h3>${esc(t.name)}</h3><p>${days} days, ${t.travelers} ${t.travelers > 1 ? 'people' : 'person'}, ${t.source === 'ai' ? 'made with AI Planner' : 'built by hand'}${t.total ? `, about ${money(t.total)}` : ''}</p></div>
+      <div class="acts"><button class="btn btn-ghost btn-sm" data-open="${t.id}">Open in builder</button><button class="icon-btn" data-del-trip="${t.id}" aria-label="Delete ${esc(t.name)}">${icon('trash')}</button></div></div>`;
+  }
+
+  function render() {
+    if (!getUser()) return guest();
+    const u = getUser(), c = counts();
+    $('#root').innerHTML = `<div class="account">
+      <nav class="panel acc-nav" role="tablist" aria-label="Account sections">
+        <div class="acc-profile"><span class="avatar">${esc(u.name[0])}</span><div><b>${esc(u.name)}</b><span>${esc(u.email)}</span></div></div>
+        ${TABS.map(([id, l, ic]) => `<button role="tab" data-tab="${id}" aria-selected="${tab === id}">${icon(ic)}${l}${c[id] !== undefined ? `<span class="n">${c[id]}</span>` : ''}</button>`).join('')}
+      </nav>
+      <section id="panel">${panel()}</section></div>`;
+  }
+
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; history.replaceState(null, '', '#' + tab); render(); return; }
+    const c = e.target.closest('[data-cancel]');
+    if (c) { const list = store.get('bookings', []); const b = list.find((x) => x.code === c.dataset.cancel); b.cancelled = true; store.set('bookings', list); render(); toast(`Booking ${b.code} cancelled`); return; }
+    const dt = e.target.closest('[data-del-trip]');
+    if (dt) { store.set('trips', store.get('trips', []).filter((x) => x.id !== dt.dataset.delTrip)); render(); toast('Trip deleted'); return; }
+    const o = e.target.closest('[data-open]');
+    if (o) { const t2 = store.get('trips', []).find((x) => x.id === o.dataset.open); if (t2.plan) { store.set('draft', t2); location.href = 'builder.html?from=draft'; } else { store.set('builder_current', t2); location.href = 'builder.html'; } return; }
+    if (e.target.closest('#signout')) { store.set('user', null); renderHeader(); render(); toast('Signed out'); }
+  });
+  document.addEventListener('submit', (e) => {
+    if (e.target.id !== 'profile') return;
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target));
+    if (!f.name.trim()) { toast('Name can’t be empty', 'x'); return; }
+    store.set('user', { ...getUser(), ...f, name: f.name.trim() });
+    renderHeader(); render(); toast('Profile saved');
+  });
+  document.addEventListener('change', (e) => { const p = e.target.closest('[data-pref]'); if (p) { const prefs = store.get('prefs', {}); prefs[p.dataset.pref] = p.checked; store.set('prefs', prefs); toast('Preference saved'); } });
+  document.addEventListener('auth-change', render);
+  document.addEventListener('fav-change', () => { if (tab === 'saved') render(); });
+  render();
+</script>
+</body>
+</html>

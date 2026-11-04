@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trip Builder — TravelGo</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="builder">
+<main class="wrap">
+  <header class="page-head" style="display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap;padding-bottom:24px">
+    <div><h1>Trip Builder</h1><p>Add cities and places, spread them across days and drag stops to change the order. The budget updates as you go.</p></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-ghost" id="new"><span data-ic="plus"></span>New trip</button>
+      <button class="btn btn-primary" id="save"><span data-ic="bookmark"></span>Save trip</button>
+    </div>
+  </header>
+
+  <div class="builder">
+    <aside class="b-col sticky panel" style="padding:18px" aria-label="Add to trip">
+      <div class="seg" role="tablist" style="width:100%">
+        <button type="button" role="tab" data-tab="cities" style="flex:1;justify-content:center">Cities</button>
+        <button type="button" role="tab" data-tab="places" style="flex:1;justify-content:center">Places</button>
+      </div>
+      <p class="muted" style="font-size:13.5px" id="lib-hint"></p>
+      <div class="lib-list" id="lib"></div>
+    </aside>
+
+    <section class="b-col" aria-label="Itinerary">
+      <input class="trip-name" id="name" aria-label="Trip name">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <span class="muted" style="font-size:14px">Travelers</span>
+        <div class="stepper" style="min-height:40px;width:180px"><button type="button" data-t="-1" aria-label="Fewer travelers"><span data-ic="minus"></span></button><output id="trav"></output><button type="button" data-t="1" aria-label="More travelers"><span data-ic="plus"></span></button></div>
+      </div>
+      <div id="days" class="b-col"></div>
+      <button class="btn btn-ghost" id="add-day"><span data-ic="plus"></span>Add a day</button>
+    </section>
+
+    <aside class="b-col sticky" aria-label="Budget">
+      <div class="panel">
+        <h3 style="font-size:18px;margin-bottom:14px">Budget</h3>
+        <div class="budget-ring" id="ring"></div>
+        <div class="legend" id="legend" style="margin-top:18px"></div>
+      </div>
+      <div class="panel">
+        <h3 style="font-size:18px;margin-bottom:12px">Saved trips</h3>
+        <div class="saved-list" id="saved"></div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/trips.js"></script>
+<script>
+  const uid = () => Math.random().toString(36).slice(2, 9);
+  const blank = () => ({ id: 'trip-' + uid(), name: 'My next trip', travelers: 2, days: [], source: 'builder' });
+  let trip = store.get('builder_current', null) || blank();
+  let activeDay = 0;
+  let tab = 'cities';
+
+  // incoming: AI planner draft or "Add to Trip Builder" from a destination
+  if (qs('from') === 'draft') {
+    const t = store.get('draft', null);
+    if (t) trip = { id: t.id, name: t.name, travelers: t.travelers, source: 'ai', days: t.plan.map((p) => ({ city: t.dest, stops: p.items.map((x) => ({ uid: uid(), name: x.name, note: x.note, cost: x.cost, hours: x.hours })) })) };
+    history.replaceState(null, '', 'builder.html');
+  }
+  if (qs('add')) {
+    const d = byId(DESTINATIONS, qs('add'));
+    if (d) { trip.days.push({ city: d.id, stops: [] }); activeDay = trip.days.length - 1; tab = 'places'; toast(`${d.name} added as day ${trip.days.length}`); }
+    history.replaceState(null, '', 'builder.html');
+  }
+  if (!trip.days.length) trip.days.push({ city: 'tokyo', stops: [] });
+  activeDay = Math.min(activeDay, trip.days.length - 1);
+
+  const COLORS = { Stay: '#6C63FF', Food: '#27D9C3', Transport: '#FFC861', Activities: '#FF6B81' };
+  function costs() {
+    const c = { Stay: 0, Food: 0, Transport: 0, Activities: 0 };
+    trip.days.forEach((day, i) => {
+      const d = byId(DESTINATIONS, day.city);
+      if (i < trip.days.length - 1) c.Stay += d.costs.stay * Math.ceil(trip.travelers / 2);
+      c.Food += d.costs.food * trip.travelers;
+      c.Transport += d.costs.transport * trip.travelers;
+      c.Activities += day.stops.reduce((a, s) => a + s.cost, 0) * trip.travelers;
+    });
+    return c;
+  }
+
+  function persist() { store.set('builder_current', trip); }
+
+  function renderLib() {
+    $$('[data-tab]').forEach((b) => { b.setAttribute('aria-selected', b.dataset.tab === tab); b.setAttribute('aria-pressed', b.dataset.tab === tab); });
+    const day = trip.days[activeDay];
+    if (tab === 'cities') {
+      $('#lib-hint').textContent = 'Add a city as a new day.';
+      $('#lib').innerHTML = DESTINATIONS.map((d) => `<div class="lib-item">${media(d.img, '', 120)}<div><b>${d.name}</b><span>${money(d.perDay)} per day</span></div>
+        <button class="icon-btn" data-add-city="${d.id}" aria-label="Add ${d.name} as a new day">${icon('plus')}</button></div>`).join('');
+    } else {
+      const d = byId(DESTINATIONS, day.city);
+      $('#lib-hint').innerHTML = `Adding to <b style="color:var(--text)">day ${activeDay + 1}, ${d.name}</b>. Click a day to change the target.`;
+      const sights = d.sights.map((s) => ({ name: s.n, note: s.d, hours: parseH(s.t), cost: sightCost(s.n), img: d.gallery[1] }));
+      const exps = EXPERIENCES.filter((e) => e.dest === d.id).map((e) => ({ name: e.title, note: e.city, hours: e.hours, cost: e.price, img: e.img }));
+      window._lib = [...sights, ...exps];
+      $('#lib').innerHTML = window._lib.map((p, i) => `<div class="lib-item">${media(p.img, '', 120)}<div><b>${p.name}</b><span>${p.cost ? money(p.cost) : 'Free'}, ${p.hours} h</span></div>
+        <button class="icon-btn" data-add-place="${i}" aria-label="Add ${esc(p.name)} to day ${activeDay + 1}">${icon('plus')}</button></div>`).join('');
+    }
+  }
+
+  function renderDays() {
+    $('#name').value = trip.name;
+    $('#trav').textContent = `${trip.travelers} ${trip.travelers > 1 ? 'people' : 'person'}`;
+    $('#days').innerHTML = trip.days.map((day, i) => {
+      const dayCost = day.stops.reduce((a, s) => a + s.cost, 0);
+      return `<div class="b-day ${i === activeDay ? 'is-target' : ''}" data-day="${i}">
+        <div class="b-day-head"><span class="day-num" style="width:42px;height:42px"><small>DAY</small>${i + 1}</span>
+          <div><b>${day.stops.length} stop${day.stops.length === 1 ? '' : 's'}</b><br><span class="muted" style="font-size:13px">${money(dayCost)} per person</span></div>
+          <select class="select city-sel" data-city="${i}" aria-label="City for day ${i + 1}">${DESTINATIONS.map((d) => `<option value="${d.id}" ${d.id === day.city ? 'selected' : ''}>${d.name}</option>`).join('')}</select>
+          <button class="icon-btn" data-del-day="${i}" aria-label="Remove day ${i + 1}">${icon('trash')}</button></div>
+        <div class="stops" data-drop="${i}">${day.stops.length ? day.stops.map((s, j) => `
+          <div class="stop" draggable="true" data-stop="${i}:${j}">
+            <span class="grip">${icon('grip', 'icon-sm')}</span>
+            <div><b>${esc(s.name)}</b><span>${s.hours} h</span></div>
+            <span class="cost-tag">${s.cost ? money(s.cost) : 'Free'}</span>
+            <div class="ctl"><button data-mv="${i}:${j}:-1" aria-label="Move up">${icon('up', 'icon-sm')}</button><button data-mv="${i}:${j}:1" aria-label="Move down">${icon('down', 'icon-sm')}</button><button class="del" data-del="${i}:${j}" aria-label="Remove ${esc(s.name)}">${icon('x', 'icon-sm')}</button></div>
+          </div>`).join('') : `<div class="stop-empty">Add places from the left panel or drag a stop here.</div>`}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderBudget() {
+    const c = costs();
+    const total = Object.values(c).reduce((a, b) => a + b, 0);
+    const R = 76, C = 2 * Math.PI * R;
+    let off = 0;
+    const segs = Object.entries(c).filter(([, v]) => v > 0).map(([k, v]) => {
+      const len = (v / total) * C;
+      const seg = `<circle cx="90" cy="90" r="${R}" fill="none" stroke="${COLORS[k]}" stroke-width="14" stroke-dasharray="${Math.max(0, len - 3)} ${C}" stroke-dashoffset="${-off}"/>`;
+      off += len; return seg;
+    }).join('');
+    $('#ring').innerHTML = `<svg viewBox="0 0 180 180" aria-hidden="true"><circle cx="90" cy="90" r="${R}" fill="none" stroke="var(--card)" stroke-width="14"/>${segs}</svg>
+      <div class="c"><b>${money(total)}</b><span>${trip.days.length} days, ${trip.travelers} ${trip.travelers > 1 ? 'people' : 'person'}</span></div>`;
+    $('#legend').innerHTML = Object.entries(c).map(([k, v]) => `<div><i style="background:${COLORS[k]}"></i>${k}<span>${money(v)}</span></div>`).join('')
+      + `<div style="border-top:1px solid var(--line);padding-top:8px;margin-top:4px"><span class="muted" style="margin:0;font-family:var(--f-body);font-weight:400">Per person</span><span>${money(total / trip.travelers)}</span></div>`;
+  }
+
+  function renderSaved() {
+    const list = store.get('trips', []);
+    $('#saved').innerHTML = list.length ? list.slice(0, 6).map((t) => `<div class="saved-row"><span>${esc(t.name)}</span><button data-load="${t.id}">Open</button></div>`).join('')
+      : '<p class="muted" style="font-size:14px">Saved trips appear here. Press Save trip to keep this one.</p>';
+  }
+
+  function render() { renderDays(); renderLib(); renderBudget(); renderSaved(); persist(); }
+
+  // ----- events -----
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; renderLib(); return; }
+    const ac = e.target.closest('[data-add-city]');
+    if (ac) { trip.days.push({ city: ac.dataset.addCity, stops: [] }); activeDay = trip.days.length - 1; tab = 'places'; render(); toast(`Day ${trip.days.length} added`); return; }
+    const ap = e.target.closest('[data-add-place]');
+    if (ap) { const p = window._lib[+ap.dataset.addPlace]; trip.days[activeDay].stops.push({ uid: uid(), name: p.name, note: p.note, cost: p.cost, hours: p.hours }); render(); toast(`Added to day ${activeDay + 1}`); return; }
+    const mv = e.target.closest('[data-mv]');
+    if (mv) {
+      const [i, j, dir] = mv.dataset.mv.split(':').map(Number);
+      const stops = trip.days[i].stops; const [s] = stops.splice(j, 1);
+      if (j + dir < 0 && i > 0) trip.days[i - 1].stops.push(s);
+      else if (j + dir > stops.length && i < trip.days.length - 1) trip.days[i + 1].stops.unshift(s);
+      else stops.splice(Math.max(0, Math.min(stops.length, j + dir)), 0, s);
+      render(); return;
+    }
+    const del = e.target.closest('[data-del]');
+    if (del) { const [i, j] = del.dataset.del.split(':').map(Number); trip.days[i].stops.splice(j, 1); render(); return; }
+    const dd = e.target.closest('[data-del-day]');
+    if (dd) { if (trip.days.length === 1) { toast('A trip needs at least one day', 'x'); return; } trip.days.splice(+dd.dataset.delDay, 1); activeDay = Math.min(activeDay, trip.days.length - 1); render(); return; }
+    const ld = e.target.closest('[data-load]');
+    if (ld) { const t = store.get('trips', []).find((x) => x.id === ld.dataset.load); if (t) { trip = t.plan ? { id: t.id, name: t.name, travelers: t.travelers, source: 'ai', days: t.plan.map((p) => ({ city: t.dest, stops: p.items.map((x) => ({ uid: uid(), ...x })) })) } : structuredClone(t); activeDay = 0; render(); toast(`Opened “${t.name}”`); } return; }
+    const day = e.target.closest('.b-day');
+    if (day && !e.target.closest('button, select')) { activeDay = +day.dataset.day; tab = 'places'; renderDays(); renderLib(); }
+  });
+  document.addEventListener('change', (e) => {
+    const cs = e.target.closest('[data-city]');
+    if (cs && cs.tagName === 'SELECT') { trip.days[+cs.dataset.city].city = cs.value; activeDay = +cs.dataset.city; render(); }
+  });
+  $('#name').addEventListener('input', (e) => { trip.name = e.target.value || 'Untitled trip'; persist(); });
+  $$('[data-t]').forEach((b) => b.addEventListener('click', () => { trip.travelers = Math.min(8, Math.max(1, trip.travelers + +b.dataset.t)); render(); }));
+  $('#add-day').onclick = () => { const last = trip.days[trip.days.length - 1]; trip.days.push({ city: last ? last.city : 'tokyo', stops: [] }); activeDay = trip.days.length - 1; render(); };
+  $('#new').onclick = () => { trip = blank(); trip.days.push({ city: 'tokyo', stops: [] }); activeDay = 0; tab = 'cities'; render(); $('#name').select(); };
+  $('#save').onclick = () => {
+    const list = store.get('trips', []).filter((t) => t.id !== trip.id);
+    const c = costs();
+    list.unshift({ ...structuredClone(trip), total: Object.values(c).reduce((a, b) => a + b, 0), dest: trip.days[0].city, saved: new Date().toISOString() });
+    store.set('trips', list); renderSaved(); toast('Trip saved');
+  };
+
+  // drag and drop between and within days
+  let drag = null;
+  document.addEventListener('dragstart', (e) => { const s = e.target.closest('.stop'); if (!s) return; drag = s.dataset.stop.split(':').map(Number); s.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', s.dataset.stop); });
+  document.addEventListener('dragend', () => { $$('.dragging').forEach((x) => x.classList.remove('dragging')); $$('.is-drop').forEach((x) => x.classList.remove('is-drop')); drag = null; });
+  document.addEventListener('dragover', (e) => { const z = e.target.closest('[data-drop]'); if (!z || !drag) return; e.preventDefault(); $$('.is-drop').forEach((x) => x !== z.parentNode && x.classList.remove('is-drop')); z.parentNode.classList.add('is-drop'); });
+  document.addEventListener('drop', (e) => {
+    const z = e.target.closest('[data-drop]'); if (!z || !drag) return; e.preventDefault();
+    const to = +z.dataset.drop;
+    const rows = $$('.stop', z).filter((x) => !x.classList.contains('dragging'));
+    let idx = rows.findIndex((r) => e.clientY < r.getBoundingClientRect().top + r.offsetHeight / 2);
+    if (idx < 0) idx = rows.length;
+    const [s] = trip.days[drag[0]].stops.splice(drag[1], 1);
+    trip.days[to].stops.splice(idx, 0, s);
+    drag = null; render();
+  });
+
+  render();
+</script>
+</body>
+</html>

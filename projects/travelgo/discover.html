@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discover the world map — TravelGo</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  .map-overlay { position: absolute; top: 16px; left: 60px; right: 16px; z-index: 500; display: flex; gap: 8px; flex-wrap: wrap; pointer-events: none; }
+  .map-overlay .chip { pointer-events: auto; background: rgba(18,26,43,.85); backdrop-filter: blur(10px); }
+  .map-hud { position: absolute; left: 16px; bottom: 28px; z-index: 500; pointer-events: none; }
+  .map-hud .coord { display: block; font-size: 14px; padding: 8px 12px; border-radius: 10px; background: rgba(11,16,32,.8); border: 1px solid var(--line); }
+  .map-area { position: relative; }
+  @media (hover: none) { .map-hud { display: none; } }
+</style>
+</head>
+<body data-page="discover">
+<main class="map-page">
+  <div class="map-area">
+    <div class="map-canvas" id="world" aria-label="Interactive world map. Use the list on the right to choose a city."></div>
+    <div class="map-overlay chips" id="continents" role="group" aria-label="Filter by continent"></div>
+    <div class="map-hud"><span class="coord" id="cursor">Move over the map</span></div>
+  </div>
+  <aside class="map-side" id="side" aria-live="polite"></aside>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const map = makeMap('world', { center: [30, 30], zoom: 3, scroll: true });
+  const markers = {};
+  let continent = '';
+  let active = null;
+  const hub = [48.5, 15];
+  const routes = L.layerGroup().addTo(map);
+
+  DESTINATIONS.forEach((d) => {
+    markers[d.id] = L.marker([d.lat, d.lng], { icon: pinIcon(false), title: d.name })
+      .addTo(map).bindTooltip(d.name, { direction: 'top', offset: [0, -10], className: 'pin-label', permanent: false })
+      .on('click', () => select(d.id));
+  });
+
+  map.on('mousemove', (e) => { $('#cursor').textContent = fmtCoord(e.latlng.lat, ((e.latlng.lng + 540) % 360) - 180); });
+
+  const visible = () => DESTINATIONS.filter((d) => !continent || d.continent === continent);
+
+  function drawRoutes() {
+    routes.clearLayers();
+    visible().forEach((d) => L.polyline(arc(hub, [d.lat, d.lng]), { color: d.id === active ? '#27D9C3' : '#6C63FF', weight: d.id === active ? 2 : 1, opacity: d.id === active ? .9 : .35, dashArray: '3 6', interactive: false }).addTo(routes));
+  }
+
+  function list() {
+    $('#side').innerHTML = `
+      <div class="map-side-head"><h1>Discover</h1><p>${visible().length} destinations. Tap a pin or a city to see costs, sights and photos.</p></div>
+      <div class="city-list">${visible().map((d) => `
+        <button class="city-row" data-city="${d.id}">${media(d.img, '', 200)}
+          <div><b>${d.name}</b><span>${d.country}</span></div><span class="coord">${money(d.perDay)}/day</span></button>`).join('')}</div>`;
+  }
+
+  function select(id) {
+    active = id;
+    const d = byId(DESTINATIONS, id);
+    Object.entries(markers).forEach(([k, m]) => m.setIcon(pinIcon(k === id)));
+    drawRoutes();
+    map.flyTo([d.lat, d.lng], 5, { duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.2 });
+    const total = d.perDay * 7;
+    $('#side').innerHTML = `
+      <button class="back-btn" data-back>${icon('left', 'icon-sm')}All destinations</button>
+      <div class="city-detail">
+        <div style="padding:14px 22px 0">${media(d.img, `${d.name}, ${d.country}`, 900)}</div>
+        <div class="cd-body">
+          <div><span class="coord">${fmtCoord(d.lat, d.lng)}</span><h2>${d.name}</h2><p class="muted">${d.country}, ${d.continent}</p></div>
+          <p class="muted" style="font-size:15px">${d.short}</p>
+          <div><span class="label">Typical daily costs</span>
+            <div class="cost-grid" style="margin-top:8px"><div class="cost"><span>Stay</span><b>${money(d.costs.stay)}</b></div><div class="cost"><span>Food</span><b>${money(d.costs.food)}</b></div><div class="cost"><span>Transport</span><b>${money(d.costs.transport)}</b></div></div>
+            <p class="muted" style="font-size:13.5px;margin-top:8px">About <b style="color:var(--text)">${money(total)}</b> for 7 days per person.</p></div>
+          <div><span class="label">Popular sights</span>
+            <div class="sight-list" style="margin-top:8px">${d.sights.map((s) => `<div class="sight">${icon('pin')}<div style="flex:1"><b>${s.n}</b><span>${s.d}</span></div><span class="coord">${s.t}</span></div>`).join('')}</div></div>
+          <div><span class="label">Photos</span><div class="thumbs" style="margin-top:8px">${d.gallery.map((g) => media(g, d.name, 300)).join('')}</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a class="btn btn-primary" href="destination.html?id=${d.id}">Explore ${d.name}</a>
+            <a class="btn btn-ghost" href="planner.html?dest=${d.id}">${icon('sparkles')}Plan with AI</a>
+          </div>
+        </div>
+      </div>`;
+    $('#side').scrollTop = 0;
+  }
+
+  function drawChips() {
+    const cs = ['', ...new Set(DESTINATIONS.map((d) => d.continent))];
+    $('#continents').innerHTML = cs.map((c) => `<button class="chip" data-c="${c}" aria-pressed="${c === continent}">${c || 'All'}</button>`).join('');
+  }
+  $('#continents').addEventListener('click', (e) => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    continent = c.dataset.c; active = null;
+    drawChips(); list(); drawRoutes();
+    Object.entries(markers).forEach(([k, m]) => { const d = byId(DESTINATIONS, k); (!continent || d.continent === continent) ? m.addTo(map) : m.remove(); m.setIcon(pinIcon(false)); });
+    const v = visible();
+    map.flyToBounds(v.map((d) => [d.lat, d.lng]), { padding: [80, 80], maxZoom: 5, duration: 1 });
+  });
+  $('#side').addEventListener('click', (e) => {
+    const r = e.target.closest('[data-city]'); if (r) select(r.dataset.city);
+    if (e.target.closest('[data-back]')) { active = null; Object.values(markers).forEach((m) => m.setIcon(pinIcon(false))); drawRoutes(); list(); map.flyTo([30, 30], 3, { duration: 1 }); }
+  });
+
+  drawChips(); list(); drawRoutes();
+  if (qs('id')) select(qs('id'));
+</script>
+</body>
+</html>

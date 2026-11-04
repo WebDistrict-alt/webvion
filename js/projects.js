@@ -19,6 +19,17 @@
 
 window.PROJECTS = [
   {
+    title: "TravelGo",
+    category: "Travel",
+    year: "2026",
+    description:
+      "Travel platform with an interactive world map, destination and hotel catalogues, demo booking, an AI trip planner and a drag-and-drop trip builder.",
+    image: "assets/projects/travelgo.jpg",
+    url: "projects/travelgo/index.html",
+    domain: "travelgo.app",
+    tags: ["Interactive map", "AI planner", "Booking"],
+  },
+  {
     title: "TechZone",
     category: "E-commerce",
     year: "2026",

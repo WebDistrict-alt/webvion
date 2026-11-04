@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hotels — TravelGo</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="hotels">
+<main class="wrap">
+  <header class="page-head">
+    <h1>Hotels</h1>
+    <p>Boutique stays, mountain resorts and overwater villas, checked by our team and rated by real guests.</p>
+  </header>
+
+  <div class="catalog">
+    <aside class="filters" id="filters" aria-label="Filters">
+      <h3>Filters <button class="icon-btn close-f" type="button" aria-label="Close filters" data-close-f><span data-ic="x"></span></button></h3>
+      <div class="f-group"><span class="label">Price per night</span>
+        <input type="range" id="f-price" min="30" max="900" step="10" value="900" aria-label="Maximum price per night">
+        <div class="range-out"><span>$30</span><span>up to <b id="f-price-out">$900</b></span></div></div>
+      <div class="f-group"><span class="label">Guest rating</span><div class="chips" id="f-rating"></div></div>
+      <label class="field"><span class="label" style="color:var(--text);font-weight:600;font-size:14px">Country</span><select class="select" id="f-country"><option value="">All countries</option></select></label>
+      <div class="f-group"><span class="label">Property type</span><div class="chips" id="f-type"></div></div>
+      <div class="f-group"><span class="label">Stars</span><div class="chips" id="f-stars"></div></div>
+      <div class="f-group"><span class="label">Amenities</span><div id="f-amen"></div></div>
+      <button class="btn btn-ghost btn-sm" type="button" id="f-reset">Clear filters</button>
+    </aside>
+
+    <section aria-label="Results">
+      <div class="toolbar">
+        <p class="count" aria-live="polite"><b id="count">0</b> hotels</p>
+        <div class="toolbar-right">
+          <button class="btn btn-ghost btn-sm filter-toggle" type="button" data-open-f><span data-ic="sliders"></span>Filters</button>
+          <select class="select" id="sort" aria-label="Sort" style="min-height:40px;width:auto"><option value="rec">Recommended</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="rating">Top rated</option></select>
+        </div>
+      </div>
+      <div class="grid grid-3" id="results"></div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  const TYPES = [...new Set(HOTELS.map((h) => h.type))];
+  const state = { price: 900, rating: 0, country: qs('country') || '', types: new Set(), stars: new Set(), amen: new Set(), sort: 'rec' };
+  const chip = (v, l, on) => `<button type="button" class="chip" data-v="${v}" aria-pressed="${on}">${l}</button>`;
+
+  $('#f-country').innerHTML += [...new Set(HOTELS.map((h) => h.country))].sort().map((c) => `<option ${c === state.country ? 'selected' : ''}>${c}</option>`).join('');
+  $('#f-amen').innerHTML = Object.entries(AMENITIES).map(([k, a]) => `<label class="check"><input type="checkbox" value="${k}">${a.label}</label>`).join('');
+
+  function drawChips() {
+    $('#f-rating').innerHTML = [[0, 'Any'], [8.5, '8.5+'], [9, '9+'], [9.5, '9.5+']].map(([v, l]) => chip(v, l, state.rating === v)).join('');
+    $('#f-type').innerHTML = TYPES.map((t) => chip(t, t, state.types.has(t))).join('');
+    $('#f-stars').innerHTML = [2, 3, 4, 5].map((s) => chip(s, `${s} ★`, state.stars.has(s))).join('');
+  }
+
+  function render() {
+    let list = HOTELS.filter((h) =>
+      h.price <= state.price && h.rating >= state.rating &&
+      (!state.country || h.country === state.country) &&
+      (!state.types.size || state.types.has(h.type)) &&
+      (!state.stars.size || state.stars.has(h.stars)) &&
+      [...state.amen].every((a) => h.amen.includes(a)));
+    if (state.sort === 'low') list.sort((a, b) => a.price - b.price);
+    if (state.sort === 'high') list.sort((a, b) => b.price - a.price);
+    if (state.sort === 'rating') list.sort((a, b) => b.rating - a.rating);
+    $('#count').textContent = list.length;
+    $('#f-price-out').textContent = money(state.price);
+    $('#results').innerHTML = list.length ? list.map(hotelCard).join('') :
+      `<div class="empty" style="grid-column:1/-1"><b>No hotels match these filters</b>Try a higher price limit or fewer amenities.<br><button class="btn btn-ghost btn-sm" data-reset>Clear filters</button></div>`;
+  }
+
+  const onChip = (el, fn) => el.addEventListener('click', (e) => { const c = e.target.closest('.chip'); if (!c) return; fn(c.dataset.v); drawChips(); render(); });
+  const toggle = (set, v) => (set.has(v) ? set.delete(v) : set.add(v));
+  onChip($('#f-rating'), (v) => { state.rating = +v; });
+  onChip($('#f-type'), (v) => toggle(state.types, v));
+  onChip($('#f-stars'), (v) => toggle(state.stars, +v));
+  $('#f-amen').addEventListener('change', (e) => { toggle(state.amen, e.target.value); render(); });
+  $('#f-price').addEventListener('input', (e) => { state.price = +e.target.value; render(); });
+  $('#f-country').addEventListener('change', (e) => { state.country = e.target.value; render(); });
+  $('#sort').addEventListener('change', (e) => { state.sort = e.target.value; render(); });
+  function reset() {
+    Object.assign(state, { price: 900, rating: 0, country: '' });
+    [state.types, state.stars, state.amen].forEach((s) => s.clear());
+    $('#f-price').value = 900; $('#f-country').value = '';
+    $$('#f-amen input').forEach((i) => { i.checked = false; });
+    drawChips(); render();
+  }
+  $('#f-reset').onclick = reset;
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-reset]')) reset(); });
+  $('[data-open-f]').onclick = () => $('#filters').classList.add('is-open');
+  $('[data-close-f]').onclick = () => $('#filters').classList.remove('is-open');
+
+  drawChips(); render();
+</script>
+</body>
+</html>

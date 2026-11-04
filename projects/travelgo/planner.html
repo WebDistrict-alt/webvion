@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Travel Planner — TravelGo</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="planner">
+<main class="wrap">
+  <header class="page-head" style="display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap">
+    <div><span class="badge badge-teal"><span data-ic="sparkles"></span>AI Planner</span>
+      <h1 style="margin-top:14px">Plan your trip in a minute</h1>
+      <p>Tell the planner where, how long and what you like. You get a day-by-day route with timings, costs and local tips.</p></div>
+    <a class="btn btn-ghost" href="builder.html"><span data-ic="route"></span>Build a route by hand</a>
+  </header>
+
+  <div class="planner">
+    <form class="panel planner-form" id="form" novalidate>
+      <label class="field"><span>Where do you want to go?</span><select class="select" name="dest" id="dest"></select></label>
+      <div class="two">
+        <div class="field"><span>Days</span><div class="stepper"><button type="button" data-step="days:-1" aria-label="Fewer days"><span data-ic="minus"></span></button><output id="o-days"></output><button type="button" data-step="days:1" aria-label="More days"><span data-ic="plus"></span></button></div></div>
+        <div class="field"><span>Travelers</span><div class="stepper"><button type="button" data-step="travelers:-1" aria-label="Fewer travelers"><span data-ic="minus"></span></button><output id="o-travelers"></output><button type="button" data-step="travelers:1" aria-label="More travelers"><span data-ic="plus"></span></button></div></div>
+      </div>
+      <div class="field"><span>Budget</span><div class="seg" role="group" aria-label="Budget" id="tier" style="width:100%">
+        <button type="button" data-v="budget" style="flex:1;justify-content:center">Budget</button><button type="button" data-v="mid" style="flex:1;justify-content:center">Comfort</button><button type="button" data-v="luxury" style="flex:1;justify-content:center">Luxury</button></div></div>
+      <div class="field"><span>Interests</span><div class="chips" id="interests"></div></div>
+      <div class="field"><span>Trip pace</span><div class="seg" role="group" aria-label="Trip pace" id="pace" style="width:100%">
+        <button type="button" data-v="relaxed" style="flex:1;justify-content:center">Relaxed</button><button type="button" data-v="balanced" style="flex:1;justify-content:center">Balanced</button><button type="button" data-v="packed" style="flex:1;justify-content:center">Packed</button></div></div>
+      <button class="btn btn-grad btn-block" type="submit" id="gen" style="min-height:52px"><span data-ic="sparkles"></span>Generate My Trip</button>
+    </form>
+
+    <section id="out" aria-live="polite">
+      <div class="panel planner-empty">
+        <div>
+          <svg class="orbit" viewBox="0 0 180 180" aria-hidden="true">
+            <circle cx="90" cy="90" r="80" fill="none" stroke="rgba(146,157,181,.18)" stroke-dasharray="2 6"/>
+            <circle cx="90" cy="90" r="52" fill="none" stroke="rgba(108,99,255,.35)"/>
+            <path class="route-dash" d="M38 120 Q 90 20 148 70" fill="none" stroke="#27D9C3" stroke-width="2" stroke-dasharray="4 5"/>
+            <circle cx="38" cy="120" r="6" fill="#6C63FF"/><circle cx="148" cy="70" r="6" fill="#27D9C3"/><circle cx="90" cy="90" r="3" fill="#F5F7FF"/>
+          </svg>
+          <h2>Your itinerary appears here</h2>
+          <p>Pick a destination and your interests on the left, then press Generate My Trip.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/trips.js"></script>
+<script>
+  const s = { dest: qs('dest') || 'tokyo', days: 5, travelers: 2, tier: 'mid', pace: 'balanced', interests: new Set(['food', 'culture']), variant: 0 };
+  let trip = null;
+
+  $('#dest').innerHTML = DESTINATIONS.map((d) => `<option value="${d.id}" ${d.id === s.dest ? 'selected' : ''}>${d.name}, ${d.country}</option>`).join('');
+  function drawForm() {
+    $('#o-days').textContent = `${s.days} days`;
+    $('#o-travelers').textContent = `${s.travelers} ${s.travelers > 1 ? 'people' : 'person'}`;
+    $$('#tier button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === s.tier));
+    $$('#pace button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === s.pace));
+    $('#interests').innerHTML = Object.entries(INTERESTS).map(([k, v]) => `<button type="button" class="chip" data-v="${k}" aria-pressed="${s.interests.has(k)}">${icon(v.icon)}${v.label}</button>`).join('');
+  }
+  $('#form').addEventListener('click', (e) => {
+    const st = e.target.closest('[data-step]');
+    if (st) { const [k, dv] = st.dataset.step.split(':'); const lim = k === 'days' ? [2, 10] : [1, 8]; s[k] = Math.min(lim[1], Math.max(lim[0], s[k] + +dv)); drawForm(); }
+    const t = e.target.closest('#tier button'); if (t) { s.tier = t.dataset.v; drawForm(); }
+    const p = e.target.closest('#pace button'); if (p) { s.pace = p.dataset.v; drawForm(); }
+    const c = e.target.closest('#interests .chip'); if (c) { s.interests.has(c.dataset.v) ? s.interests.delete(c.dataset.v) : s.interests.add(c.dataset.v); drawForm(); }
+  });
+  $('#dest').addEventListener('change', (e) => { s.dest = e.target.value; });
+
+  const STEPS = ['Reading your preferences', 'Picking sights and experiences', 'Balancing the days', 'Estimating costs'];
+  async function generate(newVariant) {
+    if (newVariant) s.variant++;
+    const btn = $('#gen'); btn.disabled = true;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    $('#out').innerHTML = `<div class="panel gen-loading"><ul class="gen-steps">${STEPS.map((x) => `<li>${icon('clock')}${x}</li>`).join('')}</ul>
+      <div class="skel" style="height:200px"></div><div class="skel" style="height:72px"></div><div class="skel" style="height:72px"></div><div class="skel" style="height:72px"></div></div>`;
+    $('#out').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    const lis = $$('.gen-steps li');
+    for (const li of lis) { await new Promise((r) => setTimeout(r, reduce ? 50 : 420)); li.classList.add('done'); li.querySelector('svg').outerHTML = icon('check'); }
+    trip = generateTrip({ dest: s.dest, days: s.days, travelers: s.travelers, tier: s.tier, pace: s.pace, interests: [...s.interests], variant: s.variant });
+    renderTrip();
+    btn.disabled = false;
+  }
+
+  function renderTrip() {
+    const d = byId(DESTINATIONS, trip.dest);
+    const max = Math.max(...Object.values(trip.costs));
+    const exps = EXPERIENCES.filter((e) => e.dest === d.id);
+    $('#out').innerHTML = `
+      <div class="trip-hero">${media(d.img, d.name, 1400)}
+        <div class="txt"><span class="badge badge-glass" style="position:static">${TIER[trip.tier].label}, ${PACE[trip.pace].label.toLowerCase()} pace</span>
+          <h2>${trip.name}</h2><span class="coord">${fmtCoord(d.lat, d.lng)}</span></div></div>
+      <div class="trip-stats">
+        <div class="trip-stat"><span>Estimated total</span><b>${money(trip.total)}</b></div>
+        <div class="trip-stat"><span>Per person</span><b>${money(trip.total / trip.travelers)}</b></div>
+        <div class="trip-stat"><span>Planned stops</span><b>${trip.plan.reduce((a, p) => a + p.items.length, 0)}</b></div>
+        <div class="trip-stat"><span>Time on activities</span><b>${Math.round(trip.hours)} h</b></div>
+      </div>
+      <div class="result-actions" style="margin-bottom:28px">
+        <button class="btn btn-primary" data-act="save">${icon('bookmark')}Save trip</button>
+        <button class="btn btn-ghost" data-act="builder">${icon('route')}Edit in Trip Builder</button>
+        <button class="btn btn-text" data-act="again">${icon('sparkles')}Show another version</button>
+      </div>
+
+      <h2 style="font-size:24px;margin-bottom:14px">Day by day</h2>
+      <div class="timeline">${trip.plan.map((p, i) => `
+        <details class="day" ${i < 2 ? 'open' : ''}>
+          <summary><span class="day-num"><small>DAY</small>${p.day}</span><div><b>${p.title}</b><span>${p.items.length} stops, ${p.items.reduce((a, x) => a + x.hours, 0)} h, ${money(p.items.reduce((a, x) => a + x.cost, 0))} per person</span></div>${icon('down', 'chev')}</summary>
+          <div class="slots">${p.items.map((x) => `
+            <div class="slot"><time>${x.time}</time><div><b>${x.name}</b><p>${x.note}</p></div><div class="meta"><b>${x.cost ? money(x.cost) : 'Free'}</b><br>${x.hours} h</div></div>`).join('')}</div>
+        </details>`).join('')}</div>
+
+      <h2 style="font-size:24px;margin:36px 0 14px">Places worth your time</h2>
+      <div class="sight-list">${d.sights.map((x) => `<div class="sight">${icon('pin')}<div style="flex:1"><b>${x.n}</b><span>${x.d}</span></div><span class="coord">${x.t}</span></div>`).join('')}</div>
+
+      ${exps.length ? `<h2 style="font-size:24px;margin:36px 0 14px">Recommended activities</h2><div class="grid grid-3" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">${exps.map(expCard).join('')}</div>` : ''}
+
+      <div class="panel" style="margin-top:36px">
+        <h2 style="font-size:22px;margin-bottom:16px">Estimated costs for ${trip.travelers} ${trip.travelers > 1 ? 'people' : 'person'}</h2>
+        <div class="cost-break">${Object.entries(trip.costs).map(([k, v]) => `<div><span>${k}</span><span class="bar"><i style="width:${(v / max) * 100}%"></i></span><span>${money(v)}</span></div>`).join('')}</div>
+        <p class="muted" style="font-size:13px;margin-top:14px">Flights not included. Prices are estimates for ${new Date().getFullYear()}.</p>
+      </div>
+
+      <h2 style="font-size:24px;margin:36px 0 14px">Tips</h2>
+      <div class="tips">${trip.tips.map((t) => `<div class="tip">${icon('bulb')}<span>${t}</span></div>`).join('')}</div>`;
+  }
+
+  $('#out').addEventListener('click', (e) => {
+    const a = e.target.closest('[data-act]'); if (!a) return;
+    if (a.dataset.act === 'again') generate(true);
+    if (a.dataset.act === 'save') {
+      const list = store.get('trips', []);
+      if (!list.some((t) => t.id === trip.id)) { list.unshift({ ...trip, source: 'ai' }); store.set('trips', list); }
+      toast('Trip saved to your account');
+    }
+    if (a.dataset.act === 'builder') { store.set('draft', trip); location.href = 'builder.html?from=draft'; }
+  });
+  $('#form').addEventListener('submit', (e) => { e.preventDefault(); generate(false); });
+
+  drawForm();
+  if (qs('dest')) generate(false);
+</script>
+</body>
+</html>

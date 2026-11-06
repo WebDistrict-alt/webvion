@@ -19,6 +19,17 @@
 
 window.PROJECTS = [
   {
+    title: "IRONCORE",
+    category: "Fitness",
+    year: "2026",
+    description:
+      "Sport-tech fitness club with a branded preloader, live class schedule with demo booking, membership calculator, 3D trainer cards and a member area — in Russian and English.",
+    image: "assets/projects/ironcore.jpg",
+    url: "projects/ironcore/index.html",
+    domain: "ironcore.club",
+    tags: ["React + TS", "Booking", "RU / EN"],
+  },
+  {
     title: "TravelGo",
     category: "Travel",
     year: "2026",
